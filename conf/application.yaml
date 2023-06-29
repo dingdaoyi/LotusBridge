@@ -1,0 +1,6 @@
+# 数据库配置
+database:
+  database: sqlite.db
+# 日志级别
+logger:
+  level: DEBUG
