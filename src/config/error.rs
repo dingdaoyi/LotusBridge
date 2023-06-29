@@ -12,6 +12,7 @@ pub type Result<T> = std::result::Result<T, EdgeError>;
 pub enum EdgeError {
     /// sqlx异常
     SqlxError(sqlx::error::Error),
+    Message(String)
 }
 
 /// sqlx异常转换为EdgeError
@@ -33,7 +34,12 @@ impl IntoResponse for EdgeError {
             EdgeError::SqlxError(err) => {
                 tracing::error!("数据库未知异常:{:}",&err);
                 (StatusCode::INTERNAL_SERVER_ERROR, format!("数据库异常:{}", err.to_string()))
-            }
+            },
+
+            EdgeError::Message(err) => {
+                tracing::error!("数据错误:{:}",&err);
+                (StatusCode::BAD_REQUEST, format!("数据错误:{}",err))
+            },
         };
 
         let body = Json(json!({
