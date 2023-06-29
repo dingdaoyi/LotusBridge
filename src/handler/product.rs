@@ -3,7 +3,7 @@ use axum::Json;
 use sqlx::SqlitePool;
 use crate::config::error::{Result};
 use crate::models::product::{CreatProduct, Product};
-use crate::utils::id_util;
+use crate::utils::generate_unique_id;
 
 pub async fn get_product(State(pool): State<SqlitePool>, Path(product_id): Path<i64>) -> Result<Json<Product>> {
     let product = sqlx::query_as::<_, Product>("SELECT * FROM tb_product WHERE id = ?")
@@ -18,7 +18,7 @@ pub async fn create_product(State(pool): State<SqlitePool>, product: Json<CreatP
     let created_product = sqlx::query_as::<_, Product>(
         "INSERT INTO tb_product (id, name, product_type) VALUES (?, ?, ?) RETURNING *",
     )
-        .bind(id_util::generate_unique_id())
+        .bind(generate_unique_id())
         .bind(&product.name)
         .bind(&product.product_type)
         .fetch_one(&pool)
@@ -37,7 +37,7 @@ pub async fn update_product(
     )
         .bind(&product.name)
         .bind(&product.product_type)
-        .bind(product_id as i64)
+        .bind(product_id)
         .fetch_one(&pool)
         .await?;
 
