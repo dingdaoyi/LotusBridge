@@ -1,5 +1,5 @@
 use axum::Router;
-use axum::routing::{delete, get, post, put};
+use axum::routing::{delete, get, put};
 use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
 use crate::handler::product::{create_product, delete_product, get_product, update_product};

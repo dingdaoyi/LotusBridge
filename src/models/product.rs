@@ -1,12 +1,5 @@
-use std::error::Error;
-use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use sqlx::types::Json;
-use sqlx::{Decode, Encode, FromRow, Sqlite, Type};
-use sqlx::database::{HasArguments, HasValueRef};
-use sqlx::encode::IsNull;
-use sqlx::error::BoxDynError;
-use sqlx::sqlite::SqliteValue;
+use sqlx::{FromRow, Type};
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Product {
@@ -36,7 +29,3 @@ pub enum ProductType {
     #[serde(rename = "Independent")]
     Gateway,
 }
-
-use sqlx::TypeInfo;
-use sqlx::encode::IsNull::No;
-

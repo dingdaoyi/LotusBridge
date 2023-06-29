@@ -1,7 +1,7 @@
 use axum::extract::{Path, State};
 use axum::Json;
 use sqlx::SqlitePool;
-use crate::config::error::{EdgeError, Result};
+use crate::config::error::{Result};
 use crate::models::product::{CreatProduct, Product};
 use crate::utils::id_util;
 

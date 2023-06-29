@@ -3,7 +3,7 @@ use axum::extract::{Path, Query, State};
 use axum::{Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
-use crate::config::error::{EdgeError, Result};
+use crate::config::error::{Result};
 
 
 #[derive(Deserialize)]
