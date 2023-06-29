@@ -4,12 +4,9 @@ use sqlx::SqlitePool;
 use crate::config::error::{EdgeError, Result};
 use protocol_core::{Protocol, DecoderResult};
 use libloading::{Library, Symbol};
-use std::error::Error;
-use std::mem::transmute;
 use std::ptr;
-use serde::{Deserialize, Serialize};
 
-pub async fn test_protocol(State(pool): State<SqlitePool>) -> Result<Json<DecoderResult>> {
+pub async fn test_protocol(State(_pool): State<SqlitePool>) -> Result<Json<DecoderResult>> {
     // 动态加载协议库
     let lib_path = "./target/debug/libprotocol_modbus_tcp.dylib"; // 替换为实际的协议库路径
     let lib = unsafe {

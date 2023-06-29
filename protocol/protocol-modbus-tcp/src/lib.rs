@@ -1,10 +1,9 @@
 use protocol_core::{DecoderResult, DecoderDataItem, Value, Protocol};
-use std::error::Error;
 
 pub struct ModbusTcpProtocol;
 
 impl Protocol for ModbusTcpProtocol {
-    fn process_data(&self, data: &[u8]) -> Result<DecoderResult, String> {
+    fn process_data(&self, _data: &[u8]) -> Result<DecoderResult, String> {
         println!("process_data");
         let decoder_data_item = DecoderDataItem {
             // 设置 DecoderDataItem 的字段值

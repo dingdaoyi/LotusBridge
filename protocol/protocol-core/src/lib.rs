@@ -1,6 +1,5 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Represents the result of a decoder.
 #[derive(Debug, Serialize, Deserialize)]
