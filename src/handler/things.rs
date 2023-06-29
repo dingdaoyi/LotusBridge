@@ -3,8 +3,7 @@ use axum::extract::{Path, Query, State};
 use axum::{Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
-use crate::config::error::EdgeError;
-use crate::service::thing_service::ProductFuncService;
+use crate::config::error::{EdgeError, Result};
 
 
 #[derive(Deserialize)]
@@ -17,7 +16,7 @@ pub struct PaginationParams {
 pub async fn get_product_funcs(
     State(db_pool): State<SqlitePool>,
     pagination: Query<PaginationParams>,
-) -> Result<Json<Vec<ProductFunc>>, EdgeError> {
+) -> Result<Json<Vec<ProductFunc>>> {
     let page = pagination.page.unwrap_or(1);
     let limit = pagination.limit.unwrap_or(10);
     let offset = (page - 1) * limit;
@@ -37,8 +36,10 @@ pub async fn get_product_funcs(
 pub async fn get_product_by_id(
     State(db_pool): State<SqlitePool>,
     Path(id): Path<i64>,
-) -> Result<Json<ProductFunc>, EdgeError> {
-    ProductFuncService::new(db_pool)
-        .get_thing(id).await
-        .map(|prod_func| Json(prod_func))
+) -> Result<Json<ProductFunc>> {
+    let product_func = sqlx::query_as::<_, ProductFunc>("SELECT * FROM product_func  where id =$1 LIMIT 1")
+        .bind(id)
+        .fetch_one(&db_pool)
+        .await?;
+    Ok(Json(product_func))
 }

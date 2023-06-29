@@ -6,6 +6,8 @@ use axum::{
 
 use serde_json::json;
 
+pub type Result<T> = std::result::Result<T, EdgeError>;
+
 /// 平台统一异常
 pub enum EdgeError {
     /// sqlx异常

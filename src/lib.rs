@@ -1,8 +1,8 @@
 pub mod config;
-pub mod controller;
+pub mod handler;
 pub mod models;
-pub mod service;
-pub mod routes;
+pub mod routers;
+pub mod utils;
 
 use tokio::net::TcpListener;
 use tracing::info;
@@ -11,7 +11,7 @@ use sqlx::sqlite::{SqlitePool};
 pub async fn run_app(database_url:String) -> Result<(), Box<dyn std::error::Error>> {
     let pool = SqlitePool::connect(&database_url)
         .await?;
-    let app = routes::register(pool);
+    let app = routers::register(pool);
 
     // Run it with hyper
     let listener = TcpListener::bind("0.0.0.0:8000").await?;
