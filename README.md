@@ -41,7 +41,7 @@ cargo run
 
 ## 许可证
 
-Yanbing-Edge 是开源项目，遵循 [MIT 许可证](LICENSE)。
+Yanbing-Edge 是开源项目，遵循 [GPL-3.0 许可证](LICENSE)。
 
 ## 联系方式
 
