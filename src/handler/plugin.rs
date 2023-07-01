@@ -1,7 +1,7 @@
 use axum::extract::State;
 use axum::Json;
 use sqlx::{Connection, Executor, SqlitePool};
-use crate::config::error::{EdgeError, Result};
+use crate::config::error::{Result};
 use crate::models::plugin::{CreatePluginConfig, CreatePlugin, CreateProtocolConfig};
 use crate::models::R;
 use crate::utils::generate_unique_id;
@@ -48,10 +48,10 @@ async fn insert_plugin(
         CreatePlugin::Protocol(protocol_config) => {
             insert_protocol_config(transaction, protocol_config, plugin_config_id).await?;
         }
-        CreatePlugin::DataOutput(data_output_config) => {
+        CreatePlugin::DataOutput(_data_output_config) => {
             // 执行 data_output_config 的插入操作
         }
-        CreatePlugin::RuleEngine(rule_engine_config) => {
+        CreatePlugin::RuleEngine(_rule_engine_config) => {
             // 执行 rule_engine_config 的插入操作
         }
     }

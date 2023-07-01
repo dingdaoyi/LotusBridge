@@ -1,10 +1,9 @@
 use axum::extract::State;
 use axum::Json;
 use sqlx::SqlitePool;
-use crate::config::error::{EdgeError, Result};
+use crate::config::error::{Result};
 use protocol_core::{Protocol, DecoderResult};
 use libloading::{Library, Symbol};
-use std::ptr;
 
 pub async fn test_protocol(State(_pool): State<SqlitePool>) -> Result<Json<DecoderResult>> {
     // 动态加载协议库

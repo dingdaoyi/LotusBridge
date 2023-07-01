@@ -42,11 +42,11 @@ impl Protocol for ModbusTcpProtocol {
 #[cfg(test)]
 mod tests {
     use crate::create_protocol;
-    use super::*;
+    
 
     #[test]
      fn test_modbus_tcp_protocol_create() {
-        let protocol =unsafe{ create_protocol()};
+        let _protocol =unsafe{ create_protocol()};
     }
 }
 
