@@ -7,7 +7,8 @@ edition = "2021"
 [workspace]
 members = [
     "protocol/protocol-core",
-    "protocol/protocol-modbus-tcp"
+    "protocol/protocol-modbus-tcp",
+    "yanbing-proc-macro"
 ]
 [dependencies]
 protocol-core = { path = "./protocol/protocol-core" }

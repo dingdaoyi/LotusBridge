@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 protocol-core = { path = "../protocol-core" }
+yanbing-proc-macro = { path = "../../yanbing-proc-macro" }
 
 [lib]
 name = "protocol_modbus_tcp"

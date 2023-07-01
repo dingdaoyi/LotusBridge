@@ -28,3 +28,19 @@ CREATE TABLE IF NOT EXISTS tb_product (
                                        name TEXT NOT NULL,
                                        product_type INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS plugin_config (
+                                             id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                             description TEXT,
+                                             form_customization TEXT,
+                                             plugin_type TEXT
+);
+
+CREATE TABLE IF NOT EXISTS protocol_config (
+                                               id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                               name TEXT UNIQUE NOT NULL ,
+                                               path TEXT,
+                                               description TEXT,
+                                               plugin_config_id INTEGER,
+                                               FOREIGN KEY (plugin_config_id) REFERENCES plugin_config (id)
+);
