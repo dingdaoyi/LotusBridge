@@ -1,5 +1,11 @@
+use std::env;
+use std::ffi::OsStr;
+use std::path::Path;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
+use validator::{Validate, ValidationError, ValidationErrors};
+use std::env::consts::DLL_EXTENSION;
+use crate::config::error::EdgeError;
 
 // 公共的插件配置,创建使用
 #[derive(Debug, Deserialize)]
@@ -12,7 +18,7 @@ pub struct CreatePluginConfig {
 
 #[derive(Debug, Serialize)]
 pub struct PluginConfig {
-    pub id : i64,
+    pub id: i64,
     pub description: Option<String>,
     pub form_customization: Option<String>,
     pub plugin: Plugin,
@@ -20,7 +26,7 @@ pub struct PluginConfig {
 }
 
 // 插件类型
-#[derive(Debug, Serialize, Deserialize,Type)]
+#[derive(Debug, Serialize, Deserialize, Type)]
 pub enum PluginType {
     // 系统插件
     #[serde(rename = "System")]
@@ -45,6 +51,7 @@ pub enum CreatePlugin {
     DataOutput(DataOutputConfig),
     RuleEngine(RuleEngineConfig),
 }
+
 // 南向协议解析插件配置
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ProtocolConfig {
@@ -60,14 +67,31 @@ pub struct ProtocolConfig {
 }
 
 // 南向协议解析插件配置
-#[derive(Debug,Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateProtocolConfig {
     //协议名称
     pub name: String,
     //协议库路径
+    #[validate(custom = "validate_path")]
     pub path: String,
     //协议描述
     pub description: Option<String>,
+}
+
+fn validate_path(path: &str) -> Result<(), ValidationError> {
+
+    let file_path = Path::new(path);
+    // Check if the file exists
+    if !file_path.exists() {
+        return Err(ValidationError::new("库函数不存在"));
+    }
+
+    // Check the file extension
+    let extension = file_path.extension().and_then(|ext| ext.to_str());
+    match extension {
+        Some(ext) if DLL_EXTENSION.eq(ext) => Ok(()),
+        _ => Err(ValidationError::new("库函数不支持当前系统"))
+    }
 }
 
 // 北向数据输出插件配置

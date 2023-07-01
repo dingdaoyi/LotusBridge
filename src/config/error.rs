@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+use std::error::Error;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
-
-use serde_json::json;
+use axum::extract::rejection::JsonRejection;
+use validator::{ValidationErrors, ValidationErrorsKind};
 
 pub type Result<T> = std::result::Result<T, EdgeError>;
 
@@ -12,6 +14,7 @@ pub type Result<T> = std::result::Result<T, EdgeError>;
 pub enum EdgeError {
     /// sqlx异常
     SqlxError(sqlx::error::Error),
+    ValidationErrors(ValidationErrors),
     Message(String),
 }
 
@@ -33,6 +36,14 @@ impl From<String> for EdgeError {
 }
 
 
+/// ValidationErrors异常转换为EdgeError
+/// into an `EdgeError`.
+impl From<ValidationErrors> for EdgeError {
+    fn from(inner: ValidationErrors) -> Self {
+        EdgeError::ValidationErrors(inner)
+    }
+}
+
 /// 异常统一转换为response
 impl IntoResponse for EdgeError {
     fn into_response(self) -> Response {
@@ -50,9 +61,12 @@ impl IntoResponse for EdgeError {
                 tracing::error!("数据错误:{:}",&err);
                 (StatusCode::BAD_REQUEST, format!("数据错误:{}", err))
             }
-        };
 
-        let body = Json(json!({
+            EdgeError::ValidationErrors(validation_errors) => {
+                (StatusCode::BAD_REQUEST, validation_errors.to_string())
+            }
+        };
+        let body = Json(serde_json::json!({
             "error": error_message,
         }));
 

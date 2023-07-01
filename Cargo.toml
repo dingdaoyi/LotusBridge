@@ -36,3 +36,6 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # 动态库加载
 libloading = "0.8.0"
+# 校验器 跟java validate类似
+validator = {version="0.16.0",features = ["derive"]}
+thiserror = "1.0.40"

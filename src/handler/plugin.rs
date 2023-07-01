@@ -1,6 +1,7 @@
 use axum::extract::State;
 use axum::Json;
 use sqlx::{Connection, Executor, SqlitePool};
+use validator::Validate;
 use crate::config::error::{Result};
 use crate::models::plugin::{CreatePluginConfig, CreatePlugin, CreateProtocolConfig};
 use crate::models::R;
@@ -46,6 +47,8 @@ async fn insert_plugin(
 ) -> Result<()> {
     match plugin {
         CreatePlugin::Protocol(protocol_config) => {
+            //TODO  暂时测试,没有找到集成到axum的方式,测试错误,先睡觉
+            protocol_config.validate()?;
             insert_protocol_config(transaction, protocol_config, plugin_config_id).await?;
         }
         CreatePlugin::DataOutput(_data_output_config) => {

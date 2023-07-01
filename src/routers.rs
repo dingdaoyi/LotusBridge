@@ -18,6 +18,7 @@ pub fn register(pool: SqlitePool) -> Router {
         // 协议处理
         .route("/protocol", get(test_protocol))
         //创建插件
-        .route("/plugin", post(create_plugin_config))
+        .route("/plugin", post(create_plugin_config)
+        )
         .with_state(pool)
 }
