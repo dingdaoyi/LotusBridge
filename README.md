@@ -1,8 +1,7 @@
 # Yanbing-Edge
 
-[![许可证](https://img.shields.io/badge/许可证-MIT-blue.svg)](LICENSE)
+[![许可证](https://img.shields.io/badge/许可证-GPL3.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
-[![GitHub Workflow 状态](https://img.shields.io/github/workflow/status/your-username/yanbing-edge/CI)](https://github.com/your-username/yanbing-edge/actions)
 
 Yanbing-Edge 是一个基于 Rust 的项目，旨在为边缘计算设备提供统一的解决方案。它允许您在边缘设备上处理数据，并将计算结果传送到云平台。该项目既是 Rust 学习项目，又是边缘计算在物联网场景中的实际解决方案。
 
