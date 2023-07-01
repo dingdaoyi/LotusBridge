@@ -1,12 +1,9 @@
-use std::collections::HashMap;
-use std::error::Error;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
-use axum::extract::rejection::JsonRejection;
-use validator::{ValidationErrors, ValidationErrorsKind};
+use validator::{ValidationErrors};
 
 pub type Result<T> = std::result::Result<T, EdgeError>;
 

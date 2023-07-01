@@ -1,11 +1,8 @@
-use std::env;
-use std::ffi::OsStr;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
-use validator::{Validate, ValidationError, ValidationErrors};
+use validator::{Validate, ValidationError};
 use std::env::consts::DLL_EXTENSION;
-use crate::config::error::EdgeError;
 
 // 公共的插件配置,创建使用
 #[derive(Debug, Deserialize)]
