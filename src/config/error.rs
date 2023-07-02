@@ -1,3 +1,4 @@
+use std::sync::PoisonError;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -23,6 +24,17 @@ impl From<sqlx::error::Error> for EdgeError {
     }
 }
 
+impl<T> From<PoisonError<T>> for EdgeError {
+    fn from(value: PoisonError<T>) -> Self {
+        EdgeError::Message(value.to_string())
+    }
+}
+
+impl From<libloading::Error> for EdgeError {
+    fn from(value: libloading::Error) -> Self {
+        EdgeError::Message(value.to_string())
+    }
+}
 
 /// String异常转换为EdgeError
 /// into an `EdgeError`.

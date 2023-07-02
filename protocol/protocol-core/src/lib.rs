@@ -1,3 +1,4 @@
+use std::any::Any;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -66,7 +67,7 @@ pub enum Value {
 }
 
 /// Protocol trait for data processing.
-pub trait Protocol {
+pub trait Protocol:Any + Send + Sync {
     /// Process the data and return the decoder result.
     ///
     /// # Arguments

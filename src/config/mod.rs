@@ -5,6 +5,7 @@ mod database;
 // 自定义日期解析
 pub mod date_format;
 pub mod error;
+pub mod cache;
 
 #[derive(Getters)]
 pub struct EdgeConfig {

@@ -14,8 +14,6 @@ members = [
 protocol-core = { path = "./protocol/protocol-core" }
 
 axum = { git = "https://gitee.com/diweiyunlian/axum.git", branch = "main", features = ["macros"] }
-
-tower = { version = "0.4", features = ["util"] }
 rand = "0.8.5"
 sqlx = { version = "0.7.0-alpha.3", features = ["runtime-tokio", "sqlite", "chrono"] }
 rusqlite = "0.29.0"
@@ -39,3 +37,5 @@ libloading = "0.8.0"
 # 校验器 跟java validate类似
 validator = {version="0.16.0",features = ["derive"]}
 thiserror = "1.0.40"
+tower = { version = "0.4", features = ["util", "timeout", "load-shed", "limit"] }
+tower-http = { version = "0.4", features = ["add-extension", "auth", "compression-full", "trace"] }

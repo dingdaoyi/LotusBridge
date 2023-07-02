@@ -1,9 +1,12 @@
-use axum::extract::State;
-use axum::Json;
+use axum::extract::{Path, State};
+use axum::{Extension, Json};
 use sqlx::SqlitePool;
 use crate::config::error::{Result};
 use protocol_core::{Protocol, DecoderResult};
 use libloading::{Library, Symbol};
+use crate::config::cache::ProtocolStore;
+use crate::models::plugin::ProtocolConfig;
+use crate::models::R;
 
 pub async fn test_protocol(State(_pool): State<SqlitePool>) -> Result<Json<DecoderResult>> {
     // 动态加载协议库
@@ -22,7 +25,7 @@ pub async fn test_protocol(State(_pool): State<SqlitePool>) -> Result<Json<Decod
     let boxed_raw = constructor();
 
     // 通过原始指针构造 Box，至此逻辑重归安全区
-    let extend = unsafe{
+    let extend = unsafe {
         Box::from_raw(boxed_raw)
     };
     // 构造示例数据
@@ -30,4 +33,28 @@ pub async fn test_protocol(State(_pool): State<SqlitePool>) -> Result<Json<Decod
 
     let res = extend.process_data(data.as_ref())?;
     Ok(Json(res))
+}
+
+
+pub async fn load_protocol(State(pool): State<SqlitePool>,
+                           Extension(protocol_store): Extension<ProtocolStore>,
+                           Path(id): Path<i64>) -> Result<Json<R<String>>> {
+    // 加载插件
+    let protocol_config = sqlx::query_as::<_, ProtocolConfig>("SELECT * FROM protocol_config WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&pool)
+        .await?;
+
+    // 判断内存 protocol_store 中是否已加载
+    if let Some(config) = protocol_config {
+        let name = config.name.clone();
+        if let Some(_) = protocol_store.get_protocol(&name)? {
+            return Ok(Json(R::success()));
+        }
+
+        // 加载到内存中
+        protocol_store.load_protocol(&config)?;
+    }
+    //返回数据
+    Ok(Json(R::success()))
 }
