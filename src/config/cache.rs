@@ -1,11 +1,9 @@
 use std::collections::HashMap;
-use std::error::Error;
 use std::path::Path;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use libloading::{Library, Symbol};
-use tokio::sync::RwLockWriteGuard;
 use protocol_core::Protocol;
-use crate::config::error::{EdgeError, Result};
+use crate::config::error::{Result};
 use crate::models::plugin::ProtocolConfig;
 
 #[derive(Clone)]

@@ -1,17 +1,12 @@
-use std::borrow::Cow;
-use std::time::Duration;
 use axum::{Extension, Router};
-use axum::error_handling::HandleErrorLayer;
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
 use axum::routing::{delete, get, post, put};
 use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
-use tower::{BoxError, ServiceBuilder};
+use tower::{ServiceBuilder};
 use crate::handler::plugin::create_plugin_config;
 use crate::handler::product::{create_product, delete_product, get_product, update_product};
 use crate::handler::protocol::{load_protocol, test_protocol};
-use crate::config::cache;
+
 use crate::config::cache::ProtocolStore;
 
 pub fn register(pool: SqlitePool) -> Router {
