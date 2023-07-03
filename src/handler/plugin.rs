@@ -14,7 +14,7 @@ pub async fn create_plugin_config(
     let mut conn = pool.acquire().await?;
     let mut transaction = conn.begin().await?;
     let plugin_config_id = generate_unique_id();
-    insert_plugin_config(&mut transaction, &plugin_config, plugin_config_id).await?;
+    insert_plugin_config(&mut transaction, &plugin_config, plugin_config_id.clone()).await?;
     insert_plugin(&mut transaction, &plugin_config.plugin, plugin_config_id).await?;
     transaction.commit().await?;
     Ok(Json(R::success()))

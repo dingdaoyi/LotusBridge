@@ -67,15 +67,14 @@ pub enum Value {
 }
 
 /// Protocol trait for data processing.
-pub trait Protocol:Any + Send + Sync {
-    /// Process the data and return the decoder result.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - The input data as a byte slice.
-    ///
-    /// # Returns
-    ///
-    /// The decoder result wrapped in a `Result` indicating success or failure.
-    fn process_data(&self, data: &[u8]) -> Result<DecoderResult, String>;
+pub trait Protocol: Any + Send + Sync {
+    ///读取点位数据
+    fn read_point(&self, point_id: i64) -> Result<Value, String>;
+
+    ///写点位,返回老点的值
+    fn write_point(&self, point_id: i64,value:Value) -> Result<Value, String>;
+
+    /// 初始化数据
+    /// 后续添加参数 1, 点位,2 协议特有配置
+    fn initialize(&self,)->Result<(),String>;
 }

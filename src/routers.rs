@@ -5,9 +5,9 @@ use sqlx::{SqlitePool};
 use tower::{ServiceBuilder};
 use crate::handler::plugin::create_plugin_config;
 use crate::handler::product::{create_product, delete_product, get_product, update_product};
-use crate::handler::protocol::{load_protocol, test_protocol};
 
 use crate::config::cache::ProtocolStore;
+use crate::handler::protocol::load_protocol;
 
 pub fn register(pool: SqlitePool) -> Router {
     Router::new()
@@ -19,7 +19,6 @@ pub fn register(pool: SqlitePool) -> Router {
         .route("/product/:id", put(update_product))
         .route("/product/:id", delete(delete_product))
         // 协议处理
-        .route("/protocol", get(test_protocol))
         .route("/load/protocol/:id", get(load_protocol))
         //创建插件
         .route("/plugin", post(create_plugin_config)
