@@ -9,3 +9,4 @@ edition = "2021"
 # 日期插件
 chrono = { version = "0.4.26", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
+sqlx = { version = "0.7.0-alpha.3",features=["sqlite"]}

@@ -1,5 +1,5 @@
 pub mod things;
-pub mod product;
+pub mod device;
 pub mod plugin;
 
 

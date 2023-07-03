@@ -1,58 +1,9 @@
 use std::any::Any;
-use chrono::NaiveDateTime;
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use sqlx::{Error, FromRow, Row, Sqlite, Type};
 
-/// Represents the result of a decoder.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DecoderResult {
-    /// List of decoder data items.
-    pub decoder_data_item_list: Vec<DecoderDataItem>,
-    /// ACK Message.
-    pub ack_message: Option<String>,
-    /// Message ID.
-    pub message_id: Option<i32>,
-    /// Driver service name.
-    pub driver_service_name: Option<String>,
-    /// Driver name.
-    pub driver_name: Option<String>,
-    /// IMSI.
-    pub imsi: Option<String>,
-    /// ACK topic.
-    pub ack_topic: Option<String>,
-    /// ICCID.
-    pub iccid: Option<String>,
-    /// Third-party device ID.
-    pub trd_device_id: Option<String>,
-    /// Source address.
-    pub source_address: Option<String>,
-}
-
-/// Represents a decoder data item.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DecoderDataItem {
-    /// Identifier.
-    pub identifier: String,
-    /// Unit address.
-    pub unit_address: String,
-    /// Unit type.
-    pub unit_type: Option<i32>,
-    /// Unit type name.
-    pub unit_type_name: Option<String>,
-    /// System type.
-    pub system_type: Option<i32>,
-    /// Unit description.
-    pub unit_description: Option<String>,
-    /// Value.
-    pub value: Option<Value>,
-    /// System address.
-    pub system_address: Option<i32>,
-    /// Child device code.
-    pub child_device_code: Option<String>,
-    /// Acquisition time.
-    pub acquisition_time: Option<NaiveDateTime>,
-}
-
-/// Represents a value that can be stored in `DecoderDataItem`.
+/// 解析值
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Value {
@@ -66,34 +17,55 @@ pub enum Value {
     Boolean(bool),
 }
 
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Device {
-    id: i64,
-    name: String,
-    device_type: DeviceType,
-    points: Vec<Point>,
+    pub id: i32,
+    pub name: String,
+    #[serde(rename = "deviceType")]
+    pub device_type: DeviceType,
+    pub points: Vec<Point>,
+    #[serde(rename = "customTata")]
+    pub custom_data: HashMap<String, String>,
+    #[serde(rename = "protocolId")]
+    pub protocol_id:i32,
 }
 
-enum DeviceType {
+#[derive(Debug, Serialize, Deserialize,Type)]
+pub enum DeviceType {
+    #[serde(rename = "Gateway")]
     Gateway,
+    #[serde(rename = "Independent")]
     Independent,
 }
 
-struct Point {
-    id: i64,
-    address: String,
-    data_type: DataType,
-    access_mode: AccessMode,
-    multiplier: f64,
-    precision: u32,
-    description: String,
-    part_number: Option<String>,
+#[derive(Debug, Serialize, Deserialize,FromRow)]
+pub struct Point {
+    pub id: i64,
+    ///地址
+    pub address: String,
+    #[serde(rename = "dataType")]
+    pub data_type: DataType,
+    #[serde(rename = "accessMode")]
+    pub access_mode: AccessMode,
+    pub multiplier: f64,
+    pub precision: u32,
+    pub description: String,
+    #[serde(rename = "partNumber")]
+    pub part_number: Option<String>,
 }
 
-enum DataType {
-    // 定义不同的数据类型
+#[derive(Debug, Serialize, Deserialize,Type)]
+#[serde(untagged)]
+pub enum DataType {
+    Integer,
+    Float,
+    String,
+    Boolean,
 }
 
-enum AccessMode {
+#[derive(Debug, Serialize, Deserialize,Type)]
+#[serde(untagged)]
+pub enum AccessMode {
     ReadWrite,
     ReadOnly,
     WriteOnly,
