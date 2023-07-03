@@ -7,6 +7,7 @@ use crate::handler::plugin_handler::create_plugin_config;
 use crate::handler::device_handler::{create_device, delete_device, get_device, update_device};
 
 use crate::config::cache::ProtocolStore;
+use crate::handler::point_handler::{create_point, delete_point, get_point, update_point};
 use crate::handler::protocol::load_protocol;
 
 pub fn register(pool: SqlitePool) -> Router {
@@ -18,6 +19,11 @@ pub fn register(pool: SqlitePool) -> Router {
         .route("/device", post(create_device))
         .route("/device/:id", put(update_device))
         .route("/device/:id", delete(delete_device))
+        //端点
+        .route("/point/:id", get(get_point))
+        .route("/point", post(create_point))
+        .route("/point/:id", put(update_point))
+        .route("/point/:id", delete(delete_point))
         // 协议处理
         .route("/load/protocol/:id", get(load_protocol))
         //创建插件

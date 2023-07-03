@@ -1,6 +1,7 @@
 pub mod things;
 pub mod device;
 pub mod plugin;
+pub mod point;
 
 
 use serde::{Serialize, Deserialize};
@@ -29,6 +30,10 @@ impl<T> R<T> {
 
     pub fn fail(msg: String) -> Self {
         R::new(500, false, msg, None)
+    }
+
+    pub fn bad_request(msg: String) -> Self {
+        R::new(400, false, msg, None)
     }
 
     pub fn fail_with_code(code: i32, msg: String) -> Self {

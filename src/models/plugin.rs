@@ -35,6 +35,7 @@ pub enum PluginType {
 
 // 插件类型枚举
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum Plugin {
     Protocol(ProtocolConfig),
     DataOutput(DataOutputConfig),

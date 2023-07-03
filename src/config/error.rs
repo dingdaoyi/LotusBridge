@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use validator::{ValidationErrors};
+use crate::models::R;
 
 pub type Result<T> = std::result::Result<T, EdgeError>;
 
@@ -59,25 +60,23 @@ impl IntoResponse for EdgeError {
         let (status, error_message) = match self {
             EdgeError::SqlxError(sqlx::error::Error::Io(err)) => {
                 tracing::error!("数据库处理异常:{:}",&err);
-                (StatusCode::BAD_REQUEST, err.to_string())
+                (StatusCode::BAD_REQUEST, R::<String>::fail(err.to_string()))
             }
             EdgeError::SqlxError(err) => {
                 tracing::error!("数据库未知异常:{:}",&err);
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("数据库异常:{}", err.to_string()))
+                (StatusCode::INTERNAL_SERVER_ERROR, R::fail(format!("数据库异常:{}", err.to_string())))
             }
 
             EdgeError::Message(err) => {
                 tracing::error!("数据错误:{:}",&err);
-                (StatusCode::BAD_REQUEST, format!("数据错误:{}", err))
+                (StatusCode::BAD_REQUEST, R::bad_request(format!("{}", err)))
             }
 
             EdgeError::ValidationErrors(validation_errors) => {
-                (StatusCode::BAD_REQUEST, validation_errors.to_string())
+                (StatusCode::BAD_REQUEST, R::bad_request(validation_errors.to_string()))
             }
         };
-        let body = Json(serde_json::json!({
-            "error": error_message,
-        }));
+        let body = Json(error_message);
 
         (status, body).into_response()
     }

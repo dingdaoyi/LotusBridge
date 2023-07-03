@@ -40,8 +40,10 @@ pub enum DeviceType {
 
 #[derive(Debug, Serialize, Deserialize,FromRow)]
 pub struct Point {
-    pub id: i64,
-    ///地址
+    pub id: i32,
+    // 设备id
+    pub device_id: i32,
+    //地址
     pub address: String,
     #[serde(rename = "dataType")]
     pub data_type: DataType,
@@ -55,19 +57,25 @@ pub struct Point {
 }
 
 #[derive(Debug, Serialize, Deserialize,Type)]
-#[serde(untagged)]
+// #[serde(untagged)]
 pub enum DataType {
+    #[serde(rename = "Integer")]
     Integer,
+    #[serde(rename = "Float")]
     Float,
+    #[serde(rename = "String")]
     String,
+    #[serde(rename = "Boolean")]
     Boolean,
 }
 
 #[derive(Debug, Serialize, Deserialize,Type)]
-#[serde(untagged)]
 pub enum AccessMode {
+    #[serde(rename = "ReadWrite")]
     ReadWrite,
+    #[serde(rename = "ReadOnly")]
     ReadOnly,
+    #[serde(rename = "WriteOnly")]
     WriteOnly,
 }
 
