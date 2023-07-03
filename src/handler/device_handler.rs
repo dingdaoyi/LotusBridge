@@ -5,7 +5,6 @@ use protocol_core::{Device, Point};
 use crate::config::error::{EdgeError, Result};
 use crate::models::device::{CreatDevice, DeviceDTO};
 use crate::models::R;
-use crate::utils::generate_unique_id;
 
 pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i64>) -> Result<Json<DeviceDTO>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
@@ -77,7 +76,7 @@ pub async fn update_device(
     }
 }
 
-pub async fn delete_device(State(pool): State<SqlitePool>, Path(device_id): Path<i64>) -> Result<Json<(R<String>)>> {
+pub async fn delete_device(State(pool): State<SqlitePool>, Path(device_id): Path<i64>) -> Result<Json<R<String>>> {
     sqlx::query("DELETE FROM tb_device WHERE id = ?")
         .bind(device_id)
         .execute(&pool)

@@ -13,37 +13,25 @@ impl Protocol for ModbusTcpProtocol {
         Ok(Value::Integer(10))
     }
 
-    fn initialize(&self, device_list: Vec<Device>) -> Result<(), String> {
+    fn initialize(&self, _device_list: Vec<Device>) -> Result<(), String> {
         todo!()
     }
 
 
-    fn stop(&self, force: bool) -> Result<(), String> {
+    fn stop(&self, _force: bool) -> Result<(), String> {
         todo!()
     }
 
-    fn add_device(&self, device: protocol_core::Device) -> Result<(), String> {
+    fn add_device(&self, _device: protocol_core::Device) -> Result<(), String> {
         todo!()
     }
 
-    fn remove_device(&self, device_id: i64) -> Result<(), String> {
+    fn remove_device(&self, _device_id: i64) -> Result<(), String> {
         todo!()
     }
 
-    fn update_device(&self, device: protocol_core::Device) -> Result<(), String> {
+    fn update_device(&self, _device: protocol_core::Device) -> Result<(), String> {
         todo!()
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use crate::create_protocol;
-    
-
-    #[test]
-     fn test_modbus_tcp_protocol_create() {
-        let _protocol =unsafe{ create_protocol()};
     }
 }
 

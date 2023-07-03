@@ -3,7 +3,7 @@ use axum::routing::{delete, get, post, put};
 use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
 use tower::{ServiceBuilder};
-use crate::handler::plugin::create_plugin_config;
+use crate::handler::plugin_handler::create_plugin_config;
 use crate::handler::device_handler::{create_device, delete_device, get_device, update_device};
 
 use crate::config::cache::ProtocolStore;
