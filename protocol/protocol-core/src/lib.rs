@@ -66,15 +66,60 @@ pub enum Value {
     Boolean(bool),
 }
 
+pub struct Device {
+    id: i64,
+    name: String,
+    device_type: DeviceType,
+    points: Vec<Point>,
+}
+
+enum DeviceType {
+    Gateway,
+    Independent,
+}
+
+struct Point {
+    id: i64,
+    address: String,
+    data_type: DataType,
+    access_mode: AccessMode,
+    multiplier: f64,
+    precision: u32,
+    description: String,
+    part_number: Option<String>,
+}
+
+enum DataType {
+    // 定义不同的数据类型
+}
+
+enum AccessMode {
+    ReadWrite,
+    ReadOnly,
+    WriteOnly,
+}
+
 /// Protocol trait for data processing.
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
     fn read_point(&self, point_id: i64) -> Result<Value, String>;
 
     ///写点位,返回老点的值
-    fn write_point(&self, point_id: i64,value:Value) -> Result<Value, String>;
+    fn write_point(&self, point_id: i64, value: Value) -> Result<Value, String>;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    fn initialize(&self,)->Result<(),String>;
+    fn initialize(&self, device_list: Vec<Device>) -> Result<(), String>;
+
+    /// 停止
+    fn stop(&self, force: bool) -> Result<(), String>;
+
+    /// 添加设备
+    fn add_device(&self, device: Device) -> Result<(), String>;
+
+    /// 删除设备
+    fn remove_device(&self, device_id: i64) -> Result<(), String>;
+
+    /// 更新设备
+    fn update_device(&self, device: Device) -> Result<(), String>;
 }
