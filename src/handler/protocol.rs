@@ -2,7 +2,6 @@ use axum::extract::{Path, State};
 use axum::{Extension, Json};
 use sqlx::SqlitePool;
 use crate::config::error::{Result};
-use libloading::{Library, Symbol};
 use crate::config::cache::ProtocolStore;
 use crate::models::plugin::ProtocolConfig;
 use crate::models::R;
