@@ -3,6 +3,7 @@ pub mod handler;
 pub mod models;
 pub mod routers;
 pub mod utils;
+pub mod middleware;
 
 use tokio::net::TcpListener;
 use tracing::info;

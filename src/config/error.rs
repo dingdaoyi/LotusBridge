@@ -14,7 +14,22 @@ pub enum EdgeError {
     /// sqlx异常
     SqlxError(sqlx::error::Error),
     ValidationErrors(ValidationErrors),
+    AuthError(AuthError),
     Message(String),
+}
+
+#[derive(Debug)]
+pub enum AuthError {
+    WrongCredentials,
+    MissingCredentials,
+    TokenCreation,
+    InvalidToken,
+}
+
+impl From<AuthError> for EdgeError {
+    fn from(value: AuthError) -> Self {
+        EdgeError::AuthError(value)
+    }
 }
 
 /// sqlx异常转换为EdgeError
@@ -74,6 +89,14 @@ impl IntoResponse for EdgeError {
 
             EdgeError::ValidationErrors(validation_errors) => {
                 (StatusCode::BAD_REQUEST, R::bad_request(validation_errors.to_string()))
+            }
+            EdgeError::AuthError(auth) => {
+                match auth {
+                    AuthError::WrongCredentials => (StatusCode::UNAUTHORIZED, R::fail_with_code(401,"Wrong credentials".to_string())),
+                    AuthError::MissingCredentials => (StatusCode::FORBIDDEN, R::fail_with_code(403,"Missing credentials".to_string())),
+                    AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, R::fail_with_code(500,"Token creation error".to_string())),
+                    AuthError::InvalidToken => (StatusCode::BAD_REQUEST, R::fail_with_code(400,"Invalid token".to_string())),
+                }
             }
         };
         let body = Json(error_message);

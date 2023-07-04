@@ -1,4 +1,5 @@
 use axum::{Extension, Router};
+use axum::middleware::{AddExtension, from_extractor};
 use axum::routing::{delete, get, post, put};
 use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
@@ -7,10 +8,26 @@ use crate::handler::plugin_handler::create_plugin_config;
 use crate::handler::device_handler::{create_device, delete_device, get_device, update_device};
 
 use crate::config::cache::ProtocolStore;
+use crate::handler::auth_handler;
+use crate::handler::auth_handler::login;
 use crate::handler::point_handler::{create_point, delete_point, get_point, update_point};
 use crate::handler::protocol::load_protocol;
 
 pub fn register(pool: SqlitePool) -> Router {
+    Router::new()
+        .nest("/api", routers())
+        .with_state(pool)
+        .layer(Extension(ProtocolStore::new()))
+}
+
+
+//api
+pub fn routers() -> Router<SqlitePool> {
+    need_auth_routers().merge(no_need_auth_routers())
+}
+
+//需要权限认证的路由
+pub fn need_auth_routers() -> Router<SqlitePool> {
     Router::new()
         .route("/things", get(get_product_funcs))
         .route("/things/:id", get(get_product_by_id))
@@ -27,13 +44,13 @@ pub fn register(pool: SqlitePool) -> Router {
         // 协议处理
         .route("/load/protocol/:id", get(load_protocol))
         //创建插件
-        .route("/plugin", post(create_plugin_config)
+        .route("/plugin", post(create_plugin_config),
         )
-       .with_state(pool)
-        .layer(
-                ServiceBuilder::new()
-                    .layer(Extension(ProtocolStore::new()))
-                    .into_inner(),
-        )
-        // .with_state(cache::ProtocolStore::new())
+        .layer(from_extractor::<auth_handler::Claims>())
+}
+
+//不需要权限认证的路由
+pub fn no_need_auth_routers() -> Router<SqlitePool> {
+    Router::new()
+        .route("/login", post(login))
 }

@@ -38,6 +38,7 @@ libloading = "0.8.0"
 validator = {version="0.16.0",features = ["derive"]}
 thiserror = "1.0.40"
 tower = { version = "0.4", features = ["util"] }
-#
-#utoipa = { version="3.3.0", features = ["axum_extras"] }
-#utoipa-swagger-ui = { version = "3.1.3", features = ["axum"] }
+#添加认证的依赖
+jsonwebtoken = "8.3"
+headers = "0.3"
+once_cell="1.18"
