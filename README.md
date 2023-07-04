@@ -1,5 +1,55 @@
 # Yanbing-Edge
 
+[![License](https://img.shields.io/badge/license-GPL3.0-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
+
+Yanbing-Edge is a Rust-based project that aims to provide a unified solution for edge computing devices. It allows you to process data on edge devices and transmit the computational results to the cloud platform. This project serves as both a learning project for Rust and a practical solution for edge computing in IoT scenarios.
+
+## Features
+
+- **Edge Computing**: Yanbing-Edge enables data processing and computation on edge devices, reducing frequent communication with the cloud.
+- **Unified Handling**: The project provides a unified way to handle different types of edge devices, shielding you from the complexity of device-specific operations.
+- **Cloud Platform Integration**: Yanbing-Edge seamlessly integrates with cloud platforms, allowing you to transmit processed data to the cloud for further analysis and storage.
+- **Scalability**: The project is designed to be scalable, supporting an increasing number of edge devices and suitable for large-scale edge computing deployments.
+
+## Getting Started
+
+To start using Yanbing-Edge, follow these steps:
+
+1. **Installation**: Clone the repository and build the project using Cargo, the package manager for Rust.
+
+```bash
+git clone https://github.com/dingdaoyi/yanbing-edge.git
+cd yanbing-edge
+cargo build
+```
+
+2. **Configuration**: Customize the project by modifying the configuration files in the `config` directory according to your edge device and cloud platform requirements.
+
+3. **Usage**: Run the Yanbing-Edge executable to start the edge computing process.
+
+```bash
+cargo run
+```
+
+For more detailed usage instructions and API documentation, refer to the [documentation](docs/README.md).
+
+## Contributing
+
+Contributions of all kinds are welcome and encouraged! If you're interested in contributing to Yanbing-Edge, please refer to the [contribution guidelines](CONTRIBUTING.md) to get started.
+
+## License
+
+Yanbing-Edge is an open-source project released under the [GPL-3.0 License](LICENSE).
+
+## Contact
+
+For any questions or feedback, please contact [yanbing26@qq.com](mailto:yanbing26@qq.com).
+
+---
+
+# Yanbing-Edge
+
 [![许可证](https://img.shields.io/badge/许可证-GPL3.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
 
@@ -9,7 +59,9 @@ Yanbing-Edge 是一个基于 Rust 的项目，旨在为边缘计算设备提供�
 
 - **边缘计算**：Yanbing-Edge 能够在边缘设备上进行数据处理和计算，减少与云端的频繁通信。
 - **统一处理**：该项目提供了一种统一的方式来处理不同类型的边缘设备，使您能够屏蔽设备特定操作的复杂性。
-- **云平台集成**：Yanbing-Edge 与云平台无缝集成，允许您将处理过的数据传输到云端进行进一步的分析和存储。
+- **
+
+云平台集成**：Yanbing-Edge 与云平台无缝集成，允许您将处理过的数据传输到云端进行进一步的分析和存储。
 - **可扩展性**：该项目被设计为可扩展的，可以支持日益增长的边缘设备数量，并且适用于大规模的边缘计算部署。
 
 ## 快速入门
@@ -45,5 +97,3 @@ Yanbing-Edge 是开源项目，遵循 [GPL-3.0 许可证](LICENSE)。
 ## 联系方式
 
 如有任何问题或反馈，请联系 [yanbing26@qq.com](mailto:yanbing26@qq.com)。
-
-请根据你的项目进行
