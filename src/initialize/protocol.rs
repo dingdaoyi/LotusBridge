@@ -1,8 +1,6 @@
 use sqlx::{Pool, Sqlite};
 use crate::handler::plugin_handler::load_all_protocol;
-use crate::models::plugin::ProtocolConfig;
 use crate::config::error::Result;
-use crate::config::cache;
 use crate::config::cache::get_protocol_store;
 
 //初始化协议

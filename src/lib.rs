@@ -7,8 +7,6 @@ pub mod middleware;
 pub mod initialize;
 
 use std::env;
-use axum::Router;
-use sqlx::{Pool, Sqlite};
 use tokio::net::TcpListener;
 use tracing::info;
 use sqlx::sqlite::{SqlitePool};
@@ -18,7 +16,7 @@ use crate::config::error::EdgeError;
 use crate::initialize::protocol::init_protocol;
 
 pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
-    let mut  conf = EdgeConfig::init_config();
+    let conf = EdgeConfig::init_config();
     env::set_var("RUST_LOG", conf.logger_level());
     // 设置用户缓存
     set_auth_config(conf.auth().clone());
