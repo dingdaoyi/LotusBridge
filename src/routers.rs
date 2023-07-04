@@ -5,17 +5,20 @@ use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
 use crate::handler::plugin_handler::create_plugin_config;
 use crate::handler::device_handler::{create_device, delete_device, get_device, update_device};
-use crate::config::cache::ProtocolStore;
+use crate::config::cache::{get_protocol_store, ProtocolStore, set_protocol_store};
+use crate::config::EdgeConfig;
+use crate::config::error::EdgeError;
 use crate::handler::auth_handler;
 use crate::handler::auth_handler::login;
 use crate::handler::point_handler::{create_point, delete_point, get_point, update_point};
 use crate::handler::protocol::load_protocol;
 
-pub fn register(pool: SqlitePool) -> Router {
-    Router::new()
+pub fn register(pool: SqlitePool,conf:&EdgeConfig) -> Result<Router,EdgeError> {
+    set_protocol_store(ProtocolStore::new(conf.lib_path().to_string()))?;
+    Ok(Router::new()
         .nest("/", routers())
         .with_state(pool)
-        .layer(Extension(ProtocolStore::new()))
+        .layer(Extension(get_protocol_store().unwrap())))
 }
 
 

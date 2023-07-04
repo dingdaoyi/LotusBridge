@@ -1,9 +1,9 @@
 use axum::extract::State;
 use axum::Json;
-use sqlx::{Connection, Executor, SqlitePool};
+use sqlx::{Connection, Executor, Pool, Sqlite, SqlitePool};
 use validator::Validate;
 use crate::config::error::{Result};
-use crate::models::plugin::{CreatePluginConfig, CreatePlugin, CreateProtocolConfig};
+use crate::models::plugin::{CreatePluginConfig, CreatePlugin, CreateProtocolConfig, ProtocolConfig};
 use crate::models::R;
 use crate::utils::generate_unique_id;
 
@@ -79,4 +79,12 @@ async fn insert_protocol_config(
         )
         .await?;
     Ok(())
+}
+
+/// 获取所有协议
+pub(crate) async fn load_all_protocol(pool: Pool<Sqlite>) -> Result<Vec<ProtocolConfig>> {
+    // 加载插件
+    Ok(sqlx::query_as::<_, ProtocolConfig>("SELECT * FROM protocol_config")
+        .fetch_all(&pool)
+        .await?)
 }
