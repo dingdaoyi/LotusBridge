@@ -1,4 +1,4 @@
-# Yanbing-Edge
+# Yanbing-Edge [中文](README-ZH.md)
 
 [![License](https://img.shields.io/badge/license-GPL3.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
