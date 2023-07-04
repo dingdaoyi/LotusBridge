@@ -1,23 +1,13 @@
 use axum::{
     async_trait,
-    extract::{FromRequest},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::{get, post},
-    Json, Router,
+    Json,
 };
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Validation};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use std::{fmt::Display, net::SocketAddr};
-use axum::extract::{FromRequestParts, Request};
-use axum::http::HeaderValue;
+use axum::extract::{FromRequestParts};
 use axum::http::request::Parts;
-use headers::{Authorization, Header, HeaderName};
 use headers::authorization::{Bearer, Credentials};
-use tower::util::Either::A;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::config::auth::get_auth_config;
 use crate::config::error::{AuthError, EdgeError};
 use crate::models::R;
@@ -50,7 +40,7 @@ impl<B> FromRequestParts<B> for Claims
 {
     type Rejection = EdgeError;
 
-    async fn from_request_parts(parts: &mut Parts, state: &B) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &B) -> Result<Self, Self::Rejection> {
         let token = match parts.headers.get("Authorization").and_then(Bearer::decode) {
             Some(token) => token,
             None => return Err(EdgeError::AuthError(AuthError::MissingCredentials)),

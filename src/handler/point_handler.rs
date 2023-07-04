@@ -9,10 +9,15 @@ use crate::models::R;
 pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Point>> {
     let point = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE id = ?")
         .bind(id)
-        .fetch_one(&pool)
+        .fetch_optional(&pool)
         .await?;
-
-    Ok(Json(point))
+    match point {
+        Some(point) => Ok(Json(point)),
+        None => {
+            // 没有找到匹配的行，返回自定义错误或其他逻辑
+            Err(EdgeError::Message("未找到指定的数据行".into()))
+        }
+    }
 }
 
 pub async fn create_point(State(pool): State<SqlitePool>,Json(point): Json<CreatePoint>) -> Result<Json<R<Point>>> {

@@ -1,6 +1,5 @@
 use derive_getters::Getters;
 use serde::Deserialize;
-use std::sync::{Arc, RwLock};
 use once_cell::sync::OnceCell;
 
 static AUTH_CONFIG: OnceCell<Auth> = OnceCell::new();

@@ -9,10 +9,15 @@ use crate::models::R;
 pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<DeviceDTO>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
         .bind(id)
-        .fetch_one(&pool)
+        .fetch_optional(&pool)
         .await?;
-
-    Ok(Json(device))
+    match device {
+        Some(device) => Ok(Json(device)),
+        None => {
+            // 没有找到匹配的行，返回自定义错误或其他逻辑
+            Err(EdgeError::Message("设备不存在".into()))
+        }
+    }
 }
 
 pub async fn get_device_details(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Device>> {
