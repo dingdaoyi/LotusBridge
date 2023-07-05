@@ -8,7 +8,9 @@ edition = "2021"
 [dependencies]
 protocol-core = { path = "../protocol-core" }
 yanbing-proc-macro = { path = "../../yanbing-proc-macro" }
-
+tokio = { version = "1.28", features = ["full"] }
+tracing = "0.1"
 [lib]
 name = "protocol_modbus_tcp"
 crate-type = ["cdylib"]
+

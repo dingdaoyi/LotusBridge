@@ -1,8 +1,11 @@
 use std::collections::HashMap;
+use std::ops::DerefMut;
 use std::path::Path;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex};
+use futures::future::ok;
 use libloading::{Library, Symbol};
 use once_cell::sync::OnceCell;
+use tokio::sync::oneshot;
 use protocol_core::Protocol;
 use crate::config::error::{EdgeError, Result};
 use crate::models::plugin::ProtocolConfig;
@@ -24,7 +27,7 @@ pub fn get_protocol_store() -> Option<&'static ProtocolStore> {
 #[derive(Clone)]
 pub struct ProtocolStore {
     // key为协议名称, value为协议
-    inner: Arc<RwLock<HashMap<String, Arc<Box<dyn Protocol>>>>>,
+    inner: Arc<Mutex<HashMap<String, Arc<Mutex<Box<dyn Protocol>>>>>>,
     //父级路径
     lib_path: String,
 }
@@ -33,7 +36,7 @@ impl ProtocolStore {
     /// 创建
     pub fn new(lib_path: String) -> Self {
         Self {
-            inner: Arc::new(RwLock::new(HashMap::new())),
+            inner: Arc::new(Mutex::new(HashMap::new())),
             lib_path,
         }
     }
@@ -41,12 +44,12 @@ impl ProtocolStore {
     /// 添加协议
     pub fn add_protocol(&self, name: String, protocol: Box<dyn Protocol>) -> Result<()> {
         tracing::info!("加载协议:{}",&name);
-        let protocol_mutex = Arc::new(protocol);
-        self.inner.write()?.insert(name, protocol_mutex);
+        let protocol_mutex = Arc::new(Mutex::new(protocol));
+        self.inner.lock()?.insert(name, protocol_mutex);
         Ok(())
     }
 
-    pub fn load_protocol(&self, config: &ProtocolConfig) -> Result<()> {
+    pub async fn load_protocol(&self, config: &ProtocolConfig) -> Result<()> {
         // 加载协议库
         let lib_path = Path::new(&self.lib_path);
         let protocol_path = lib_path.join(&config.path);
@@ -61,7 +64,7 @@ impl ProtocolStore {
         // 调用该函数，取得 Protocol Trait 实例的原始指针
         let boxed_raw = constructor();
         // 通过原始指针构造 Box
-        let protocol_box = unsafe {
+        let mut protocol_box = unsafe {
             Box::from_raw(boxed_raw)
         };
         self.add_protocol(config.name.clone(), protocol_box)
@@ -69,18 +72,29 @@ impl ProtocolStore {
 
     /// 清空协议
     pub fn clear_protocols(&self) -> Result<()> {
-        self.inner.write()?.clear();
+        self.inner.lock()?.clear();
         Ok(())
     }
 
     /// 删除指定名称的协议
     pub fn remove_protocol(&self, name: &str) -> Result<()> {
-        self.inner.write()?.remove(name);
+        self.inner.lock()?.remove(name);
         Ok(())
     }
 
     /// 根据名称获取协议
-    pub fn get_protocol(&self, name: &str) -> Result<Option<Arc<Box<dyn Protocol>>>> {
-        Ok(self.inner.read()?.get(name).cloned())
+    pub fn get_protocol(&self, name: &str) -> Result<Option<Arc<Mutex<Box<dyn Protocol>>>>> {
+        Ok(self.inner.lock()?.get(name).cloned())
+    }
+
+    pub fn init_protocol(&self) -> Result<()> {
+        for protocol in self.inner.lock()?.values() {
+            let protocol_mutex = protocol.clone();
+            tokio::task::spawn(async move {
+                let mut protocol_mutex = protocol_mutex.lock().unwrap();
+                protocol_mutex.deref_mut().initialize(vec![]).unwrap();
+            });
+        }
+        Ok(())
     }
 }

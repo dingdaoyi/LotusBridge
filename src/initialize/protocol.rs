@@ -10,7 +10,7 @@ pub(crate) async fn init_protocol(pool: Pool<Sqlite>)->Result<()> {
   let store=  get_protocol_store().unwrap();
     for protocol_config in protocols.iter() {
         //如果是系统插件,直接初始化
-        store.load_protocol(protocol_config)?;
+        store.load_protocol(protocol_config).await?;
     }
     Ok(())
 }

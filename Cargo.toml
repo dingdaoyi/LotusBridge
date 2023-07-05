@@ -38,3 +38,7 @@ tower = { version = "0.4", features = ["util"] }
 jsonwebtoken = "8.3"
 headers = "0.3"
 once_cell="1.18"
+state = "0.6"
+futures="0.3"
+# 依赖为啥不传递??
+pharos = "0.5"

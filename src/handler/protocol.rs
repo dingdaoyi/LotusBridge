@@ -23,7 +23,7 @@ pub async fn load_protocol(State(pool): State<SqlitePool>,
         }
 
         // 加载到内存中
-        protocol_store.load_protocol(&config)?;
+        protocol_store.load_protocol(&config).await?;
     }
     //返回数据
     Ok(Json(R::success()))

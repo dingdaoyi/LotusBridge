@@ -1,18 +1,36 @@
+pub mod event_bus;
+
 use std::any::Any;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow,Type};
+use std::error::Error;
+use std::fmt;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+pub use crate::event_bus::PharosPubSubModel;
+
+#[derive(Debug)]
+struct ProtocolError(String);
+
+
+impl fmt::Display for ProtocolError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Error for ProtocolError {}
+
 
 /// 解析值
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone,Copy)]
 #[serde(untagged)]
 pub enum Value {
     /// Integer value.
     Integer(i32),
     /// Float value.
     Float(f64),
-    /// String value.
-    String(String),
     /// Boolean value.
     Boolean(bool),
 }
@@ -89,7 +107,7 @@ pub trait Protocol: Any + Send + Sync {
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    fn initialize(&self, device_list: Vec<Device>) -> Result<(), String>;
+    fn initialize(&mut self, device_list: Vec<Device>) -> Result<(), String>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), String>;

@@ -10,6 +10,7 @@ use crate::models::R;
 pub type Result<T> = std::result::Result<T, EdgeError>;
 
 /// 平台统一异常
+#[derive(Debug)]
 pub enum EdgeError {
     /// sqlx异常
     SqlxError(sqlx::error::Error),

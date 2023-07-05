@@ -14,6 +14,7 @@ use crate::config::auth::set_auth_config;
 use crate::config::EdgeConfig;
 use crate::config::error::EdgeError;
 use crate::initialize::protocol::init_protocol;
+use crate::initialize::subscribe_point::init_subscribe_point;
 
 pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     let conf = EdgeConfig::init_config();
@@ -39,6 +40,8 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         }
         _ => {}
     }
+    // 初始化订阅端点
+    init_subscribe_point().await;
     // Run it with hyper
     let listener = TcpListener::bind("0.0.0.0:8000").await?;
     info!("listening on {}", listener.local_addr()?);
