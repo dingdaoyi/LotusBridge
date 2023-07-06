@@ -1,52 +1,44 @@
-use std::sync::{mpsc};
-
+use std::sync::mpsc;
 use protocol_core::{Value, Protocol, Device};
 
 use yanbing_proc_macro::CreateProtocol;
-use tokio::time::{Duration};
 use protocol_core::event_bus::PointEvent;
-
+use std::time::Duration;
 #[derive(CreateProtocol)]
 pub struct ModbusTcpProtocol {
     device_list: Vec<Device>,
     sender: Option<mpsc::Sender<PointEvent>>,
-
 }
 
 impl ModbusTcpProtocol {
-    pub async fn schedule_event(&self) {
-        // 获取 PharosPubSubModel 实例
-        //     let pub_sub_model = get_pubsub_model().unwrap().lock().unwrap(); 为啥这么写报错
-
-        // 创建一个定时器，每隔 1 秒发送一个事件
-        let mut interval = tokio::time::interval(Duration::from_secs(1));
+    pub fn schedule_event(&self) {
+        let sender = self.sender.clone().unwrap();
         tracing::info!("开始发送数据...");
         println!("开始发送数据...");
-        let sender = self.sender.clone().unwrap();
-        loop {
+        let rs = tokio::runtime::Runtime::new().unwrap();
 
-            // 等待定时器触发
-            interval.tick().await;
-            // 创建要发送的事件
-            let event = PointEvent {
-                point_id: 1,
-                value: Value::Integer(42),
-            };
-            let res = sender.send(event);
-            match res {
-                Ok(_) => {
-                    tracing::info!("发送事件...")
-                }
-                Err(e) => {
-                    tracing::info!("发送事件失败...{:?}",e)
-                }
-            };
-        }
+        rs.block_on(async move {
+            loop {
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                let event = PointEvent {
+                    point_id: 1,
+                    value: Value::Integer(42),
+                };
+                let res = sender.send(event);
+                match res {
+                    Ok(_) => {
+                        tracing::info!("发送事件...");
+                    }
+                    Err(e) => {
+                        tracing::info!("发送事件失败...{:?}", e);
+                    }
+                };
+            }
+        });
     }
 }
 
 unsafe impl Send for ModbusTcpProtocol {}
-
 unsafe impl Sync for ModbusTcpProtocol {}
 
 impl Default for ModbusTcpProtocol {
@@ -70,13 +62,9 @@ impl Protocol for ModbusTcpProtocol {
     fn initialize(&mut self, _device_list: Vec<Device>, sender: mpsc::Sender<PointEvent>) -> Result<(), String> {
         self.sender = Some(sender);
         self.device_list = _device_list;
-        let rs = tokio::runtime::Runtime::new().unwrap();
-        rs.block_on(async {
-            self.schedule_event().await;
-        });
+        self.schedule_event();
         Ok(())
     }
-
 
     fn stop(&self, _force: bool) -> Result<(), String> {
         todo!()
