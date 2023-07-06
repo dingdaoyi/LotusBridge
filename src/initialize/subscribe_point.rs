@@ -1,5 +1,6 @@
 use protocol_core::event_bus::PointEvent;
 use crate::config::cache::get_protocol_store;
+use crate::config::device_shadow::handler_event;
 
 pub async fn init_subscribe_point() {
     let state= get_protocol_store().unwrap();
@@ -9,18 +10,11 @@ pub async fn init_subscribe_point() {
         Ok(_) => {}
         Err(err) => {
             tracing::error!("初始化错误:{:?}",err);
-
         }
     };
     tokio::spawn(async move{
         for point_event in receiver {
-            handler_event(point_event)
+            handler_event(point_event).await;
         }
     });
-}
-
-
-// 处理上报逻辑
-fn handler_event(event: PointEvent) {
-    tracing::info!("点位:{},值:{:?}",event.point_id,event.value)
 }

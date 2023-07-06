@@ -19,9 +19,9 @@ impl ModbusTcpProtocol {
 
         rs.block_on(async move {
             loop {
-                tokio::time::sleep(Duration::from_secs(1)).await;
+                tokio::time::sleep(Duration::from_secs(10)).await;
                 let event = PointEvent {
-                    point_id: 1,
+                    point_id: 2,
                     value: Value::Integer(42),
                 };
                 let res = sender.send(event);
@@ -51,11 +51,11 @@ impl Default for ModbusTcpProtocol {
 }
 
 impl Protocol for ModbusTcpProtocol {
-    fn read_point(&self, _point_id: i64) -> Result<Value, String> {
+    fn read_point(&self, _point_id: i32) -> Result<Value, String> {
         Ok(Value::Integer(10))
     }
 
-    fn write_point(&self, _point_id: i64, _value: Value) -> Result<Value, String> {
+    fn write_point(&self, _point_id: i32, _value: Value) -> Result<Value, String> {
         Ok(Value::Integer(10))
     }
 

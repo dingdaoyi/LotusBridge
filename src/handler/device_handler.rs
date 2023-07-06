@@ -1,11 +1,11 @@
 use axum::extract::{Path, State};
 use axum::Json;
 use sqlx::SqlitePool;
-use protocol_core::{Device, Point};
+use protocol_core::{Device, Point, PointWithProtocolId, Value};
 use crate::config::error::{EdgeError, Result};
 use crate::models::device::{CreatDevice, DeviceDTO};
 use crate::models::R;
-
+use crate::config::device_shadow;
 pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<DeviceDTO>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
         .bind(id)
@@ -42,6 +42,31 @@ pub async fn get_device_details(State(pool): State<SqlitePool>, Path(id): Path<i
 
     Ok(Json(device_with_points))
 }
+
+pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Value>> {
+
+    let point = sqlx::query_as::<_, PointWithProtocolId>(r#"
+    SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
+       tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_id AS protocol_id
+        FROM tb_point
+        JOIN tb_device ON tb_point.device_id = tb_device.id
+        WHERE tb_point.id = ?;
+    "#)
+        .bind(id)
+        .fetch_optional(&pool)
+        .await?;
+    let point = match point {
+        Some(point) => point,
+        None => {
+            return Err(EdgeError::Message("point不存在,请检查请求参数".into()));
+        },
+    };
+   let res= device_shadow::read_point(point.point_id,point.protocol_id)
+       .map(|e|e.value).unwrap_or(Value::Boolean(false));
+    Ok(Json(res))
+}
+
+
 
 pub async fn create_device(State(pool): State<SqlitePool>, device: Json<CreatDevice>) -> Result<Json<R<DeviceDTO>>> {
     let created_device = sqlx::query_as::<_, DeviceDTO>(

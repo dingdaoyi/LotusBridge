@@ -77,6 +77,20 @@ pub struct Point {
     pub part_number: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct PointWithProtocolId {
+    pub point_id: i32,
+    pub device_id: i32,
+    pub address: String,
+    pub data_type: DataType,
+    pub access_mode: AccessMode,
+    pub multiplier: f64,
+    pub precision: u32,
+    pub description: String,
+    pub part_number: Option<String>,
+    pub protocol_id: i32,
+}
+
 #[derive(Debug, Serialize, Deserialize, Type)]
 // #[serde(untagged)]
 pub enum DataType {
@@ -103,10 +117,10 @@ pub enum AccessMode {
 /// Protocol trait for data processing.
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
-    fn read_point(&self, point_id: i64) -> Result<Value, String>;
+    fn read_point(&self, point_id: i32) -> Result<Value, String>;
 
     ///写点位,返回老点的值
-    fn write_point(&self, point_id: i64, value: Value) -> Result<Value, String>;
+    fn write_point(&self, point_id: i32, value: Value) -> Result<Value, String>;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置

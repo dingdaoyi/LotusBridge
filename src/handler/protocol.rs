@@ -17,11 +17,10 @@ pub async fn load_protocol(State(pool): State<SqlitePool>,
 
     // 判断内存 protocol_store 中是否已加载
     if let Some(config) = protocol_config {
-        let name = config.name.clone();
-        if let Some(_) = protocol_store.get_protocol(&name)? {
+        let id = config.id.clone();
+        if let Some(_) = protocol_store.get_protocol(id)? {
             return Ok(Json(R::success()));
         }
-
         // 加载到内存中
         protocol_store.load_protocol(&config).await?;
     }
