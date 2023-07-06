@@ -9,7 +9,6 @@ use std::error::Error;
 use std::fmt;
 use std::sync::{Arc, mpsc};
 use tokio::sync::RwLock;
-pub use crate::event_bus::PharosPubSubModel;
 use crate::event_bus::PointEvent;
 
 #[derive(Debug)]
