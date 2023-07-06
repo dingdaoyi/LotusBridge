@@ -1,4 +1,3 @@
-use protocol_core::event_bus::PointEvent;
 use crate::config::cache::get_protocol_store;
 use crate::config::device_shadow::handler_event;
 

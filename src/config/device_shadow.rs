@@ -1,9 +1,8 @@
 use protocol_core::event_bus::PointEvent;
 use crate::config::cache::get_protocol_store;
 use std::collections::HashMap;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
-use protocol_core::{Device, Value};
 
 // 全局缓存数据结构
 lazy_static! {
