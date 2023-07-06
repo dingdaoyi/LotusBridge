@@ -1,14 +1,16 @@
 pub mod event_bus;
 
 use std::any::Any;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow,Type};
+use sqlx::{FromRow, Type};
 use std::error::Error;
 use std::fmt;
-use std::sync::Arc;
+use std::sync::{Arc, mpsc};
 use tokio::sync::RwLock;
 pub use crate::event_bus::PharosPubSubModel;
+use crate::event_bus::PointEvent;
 
 #[derive(Debug)]
 struct ProtocolError(String);
@@ -24,7 +26,7 @@ impl Error for ProtocolError {}
 
 
 /// 解析值
-#[derive(Debug, Serialize, Deserialize,Clone,Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 #[serde(untagged)]
 pub enum Value {
     /// Integer value.
@@ -33,6 +35,8 @@ pub enum Value {
     Float(f64),
     /// Boolean value.
     Boolean(bool),
+    //TODO 字符串无法实现copy,这儿先这么写,看有其他解决方案没
+    String(&'static str),
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -45,10 +49,10 @@ pub struct Device {
     #[serde(rename = "customTata")]
     pub custom_data: HashMap<String, String>,
     #[serde(rename = "protocolId")]
-    pub protocol_id:i32,
+    pub protocol_id: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize,Type)]
+#[derive(Debug, Serialize, Deserialize, Type)]
 pub enum DeviceType {
     #[serde(rename = "Gateway")]
     Gateway,
@@ -56,7 +60,7 @@ pub enum DeviceType {
     Independent,
 }
 
-#[derive(Debug, Serialize, Deserialize,FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Point {
     pub id: i32,
     // 设备id
@@ -74,7 +78,7 @@ pub struct Point {
     pub part_number: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize,Type)]
+#[derive(Debug, Serialize, Deserialize, Type)]
 // #[serde(untagged)]
 pub enum DataType {
     #[serde(rename = "Integer")]
@@ -87,7 +91,7 @@ pub enum DataType {
     Boolean,
 }
 
-#[derive(Debug, Serialize, Deserialize,Type)]
+#[derive(Debug, Serialize, Deserialize, Type)]
 pub enum AccessMode {
     #[serde(rename = "ReadWrite")]
     ReadWrite,
@@ -107,7 +111,7 @@ pub trait Protocol: Any + Send + Sync {
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    fn initialize(&mut self, device_list: Vec<Device>) -> Result<(), String>;
+    fn initialize(&mut self, device_list: Vec<Device>, sender: mpsc::Sender<PointEvent>) -> Result<(), String>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), String>;

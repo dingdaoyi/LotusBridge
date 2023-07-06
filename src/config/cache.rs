@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::ops::DerefMut;
 use std::path::Path;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, mpsc, Mutex};
 use futures::future::ok;
 use libloading::{Library, Symbol};
 use once_cell::sync::OnceCell;
 use tokio::sync::oneshot;
+use protocol_core::event_bus::PointEvent;
 use protocol_core::Protocol;
 use crate::config::error::{EdgeError, Result};
 use crate::models::plugin::ProtocolConfig;
@@ -87,12 +88,13 @@ impl ProtocolStore {
         Ok(self.inner.lock()?.get(name).cloned())
     }
 
-    pub fn init_protocol(&self) -> Result<()> {
+    pub fn init_protocol(&self, sender: mpsc::Sender<PointEvent>) -> Result<()> {
         for protocol in self.inner.lock()?.values() {
             let protocol_mutex = protocol.clone();
+           let sender= sender.clone();
             tokio::task::spawn(async move {
                 let mut protocol_mutex = protocol_mutex.lock().unwrap();
-                protocol_mutex.deref_mut().initialize(vec![]).unwrap();
+                protocol_mutex.deref_mut().initialize(vec![],sender).unwrap();
             });
         }
         Ok(())
