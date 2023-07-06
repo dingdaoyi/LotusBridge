@@ -1,9 +1,9 @@
-use std::sync::{Arc, mpsc, Mutex, RwLock};
-use std::sync::mpsc::SendError;
+use std::sync::{mpsc};
+
 use protocol_core::{Value, Protocol, Device};
-use protocol_core::Value::Integer;
+
 use yanbing_proc_macro::CreateProtocol;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration};
 use protocol_core::event_bus::PointEvent;
 
 #[derive(CreateProtocol)]

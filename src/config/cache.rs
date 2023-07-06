@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::ops::DerefMut;
 use std::path::Path;
 use std::sync::{Arc, mpsc, Mutex};
-use futures::future::ok;
+
 use libloading::{Library, Symbol};
 use once_cell::sync::OnceCell;
-use tokio::sync::oneshot;
+
 use protocol_core::event_bus::PointEvent;
 use protocol_core::Protocol;
 use crate::config::error::{EdgeError, Result};
@@ -65,7 +65,7 @@ impl ProtocolStore {
         // 调用该函数，取得 Protocol Trait 实例的原始指针
         let boxed_raw = constructor();
         // 通过原始指针构造 Box
-        let mut protocol_box = unsafe {
+        let protocol_box = unsafe {
             Box::from_raw(boxed_raw)
         };
         self.add_protocol(config.name.clone(), protocol_box)
