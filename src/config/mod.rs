@@ -9,6 +9,7 @@ pub mod date_format;
 pub mod error;
 pub mod cache;
 pub mod auth;
+pub mod device_shadow;
 
 #[derive(Getters)]
 pub struct EdgeConfig {

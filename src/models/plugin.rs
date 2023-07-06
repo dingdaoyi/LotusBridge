@@ -15,7 +15,7 @@ pub struct CreatePluginConfig {
 
 #[derive(Debug, Serialize)]
 pub struct PluginConfig {
-    pub id: i64,
+    pub id: i32,
     pub description: Option<String>,
     pub form_customization: Option<String>,
     pub plugin: Plugin,
@@ -53,15 +53,15 @@ pub enum CreatePlugin {
 // 南向协议解析插件配置
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ProtocolConfig {
-    pub id: i64,
+    pub id: i32,
     //协议名称
     pub name: String,
     //协议库路径
     pub path: String,
     //协议描述
     pub description: Option<String>,
-    //协议id
-    pub plugin_config_id: i64,
+    //插件id
+    pub plugin_config_id: i32,
 }
 
 // 南向协议解析插件配置

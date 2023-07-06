@@ -1,20 +1,41 @@
+pub mod event_bus;
+
 use std::any::Any;
+
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow,Type};
+use sqlx::{FromRow, Type};
+use std::error::Error;
+use std::fmt;
+use std::sync::{mpsc};
+
+use crate::event_bus::PointEvent;
+
+#[derive(Debug)]
+struct ProtocolError(String);
+
+
+impl fmt::Display for ProtocolError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Error for ProtocolError {}
+
 
 /// 解析值
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 #[serde(untagged)]
 pub enum Value {
     /// Integer value.
     Integer(i32),
     /// Float value.
     Float(f64),
-    /// String value.
-    String(String),
     /// Boolean value.
     Boolean(bool),
+    //TODO 字符串无法实现copy,这儿先这么写,看有其他解决方案没
+    String(&'static str),
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -27,10 +48,10 @@ pub struct Device {
     #[serde(rename = "customTata")]
     pub custom_data: HashMap<String, String>,
     #[serde(rename = "protocolId")]
-    pub protocol_id:i32,
+    pub protocol_id: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize,Type)]
+#[derive(Debug, Serialize, Deserialize, Type)]
 pub enum DeviceType {
     #[serde(rename = "Gateway")]
     Gateway,
@@ -38,7 +59,7 @@ pub enum DeviceType {
     Independent,
 }
 
-#[derive(Debug, Serialize, Deserialize,FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Point {
     pub id: i32,
     // 设备id
@@ -56,7 +77,21 @@ pub struct Point {
     pub part_number: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize,Type)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct PointWithProtocolId {
+    pub point_id: i32,
+    pub device_id: i32,
+    pub address: String,
+    pub data_type: DataType,
+    pub access_mode: AccessMode,
+    pub multiplier: f64,
+    pub precision: u32,
+    pub description: String,
+    pub part_number: Option<String>,
+    pub protocol_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Type)]
 // #[serde(untagged)]
 pub enum DataType {
     #[serde(rename = "Integer")]
@@ -69,7 +104,7 @@ pub enum DataType {
     Boolean,
 }
 
-#[derive(Debug, Serialize, Deserialize,Type)]
+#[derive(Debug, Serialize, Deserialize, Type)]
 pub enum AccessMode {
     #[serde(rename = "ReadWrite")]
     ReadWrite,
@@ -82,14 +117,14 @@ pub enum AccessMode {
 /// Protocol trait for data processing.
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
-    fn read_point(&self, point_id: i64) -> Result<Value, String>;
+    fn read_point(&self, point_id: i32) -> Result<Value, String>;
 
     ///写点位,返回老点的值
-    fn write_point(&self, point_id: i64, value: Value) -> Result<Value, String>;
+    fn write_point(&self, point_id: i32, value: Value) -> Result<Value, String>;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    fn initialize(&self, device_list: Vec<Device>) -> Result<(), String>;
+    fn initialize(&mut self, device_list: Vec<Device>, sender: mpsc::Sender<PointEvent>) -> Result<(), String>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), String>;
