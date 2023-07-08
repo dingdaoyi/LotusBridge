@@ -72,6 +72,11 @@ pub fn get_library_filename(protocol_name: &str) -> String {
     {
         filename.push_str("lib");
     }
+    #[cfg(target_os = "linux")]
+    {
+        filename.push_str("lib");
+    }
+
     filename.push_str(protocol_name);
 
     #[cfg(target_os = "windows")]
