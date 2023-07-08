@@ -65,7 +65,7 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
         },
     };
    let res= device_shadow::read_point(point.protocol_id,point.into())
-       .map(|e|e.value).unwrap_or(Value::Boolean(false));
+       .map(|e|e.value)?;
     Ok(Json(res))
 }
 

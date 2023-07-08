@@ -8,7 +8,7 @@ use once_cell::sync::OnceCell;
 use protocol_core::event_bus::PointEvent;
 use protocol_core::{Device, Protocol};
 use crate::config::error::{EdgeError, Result};
-use crate::models::plugin::ProtocolConfig;
+use crate::models::plugin::{get_library_filename, ProtocolConfig};
 
 static PROTOCOL_STORE: OnceCell<ProtocolStore> = OnceCell::new();
 
@@ -57,7 +57,7 @@ impl ProtocolStore {
     ) -> Result<()> {
         // 加载协议库
         let lib_path = Path::new(&self.lib_path);
-        let protocol_path = lib_path.join(&config.path);
+        let protocol_path = lib_path.join(get_library_filename(&config.path));
         let lib = unsafe { Library::new(protocol_path) }?;
 
         // 获取 create_protocol 函数符号
@@ -71,7 +71,8 @@ impl ProtocolStore {
         let mut protocol_box = unsafe { Box::from_raw(boxed_raw) };
         let protocol_box1 = unsafe { Box::from_raw(boxed_raw) };
         tokio::task::spawn( async move {
-            protocol_box.initialize(device_list, sender).unwrap();
+            let handle=tokio::runtime::Handle::current();
+            protocol_box.initialize(device_list, sender,handle).unwrap();
         });
         self.add_protocol(config.id, protocol_box1)
     }

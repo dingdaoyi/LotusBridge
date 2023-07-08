@@ -64,6 +64,33 @@ pub struct ProtocolConfig {
     pub plugin_config_id: i32,
 }
 
+
+/// 获取协议名称
+pub fn get_library_filename(protocol_name: &str) -> String {
+    let mut filename = String::new();
+    #[cfg(target_os = "macos")]
+    {
+        filename.push_str("lib");
+    }
+    filename.push_str(protocol_name);
+
+    #[cfg(target_os = "windows")]
+    {
+        filename.push_str(".dll");
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        filename.push_str(".dylib");
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        filename.push_str(".so");
+    }
+    filename
+}
+
 // 南向协议解析插件配置
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateProtocolConfig {
@@ -105,3 +132,5 @@ pub struct RuleEngineConfig {
     // 规则引擎插件特有的字段
     // ...
 }
+
+use std::path::PathBuf;
