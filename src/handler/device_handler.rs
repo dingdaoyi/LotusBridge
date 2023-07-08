@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use axum::extract::{Path, State};
 use axum::Json;
-use sqlx::{Row, SqlitePool};
-use protocol_core::{AccessMode, DataType, Device, DeviceType, Point, PointWithProtocolId, Value};
+use sqlx::SqlitePool;
+use protocol_core::{Device, Point, PointWithProtocolId, Value};
 use crate::config::error::{EdgeError, Result};
 use crate::models::device::{CreatDevice, DeviceDTO};
 use crate::models::R;
 use crate::config::device_shadow;
-use sqlx::FromRow;
+
 
 pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<DeviceDTO>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")

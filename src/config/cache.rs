@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ops::{Deref, DerefMut};
 use std::path::Path;
 use std::sync::{Arc, mpsc, Mutex, RwLock};
 

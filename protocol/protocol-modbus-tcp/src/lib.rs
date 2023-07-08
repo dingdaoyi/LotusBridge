@@ -106,7 +106,7 @@ impl Protocol for ModbusTcpProtocol {
         }
     }
 
-    fn write_point(&self, request: WriterPointRequest) -> Result<Value, String> {
+    fn write_point(&self, _request: WriterPointRequest) -> Result<Value, String> {
         Ok(Value::Integer(10))
     }
 
