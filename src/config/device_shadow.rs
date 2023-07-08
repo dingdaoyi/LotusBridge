@@ -3,6 +3,7 @@ use crate::config::cache::get_protocol_store;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
+use protocol_core::ReadPointRequest;
 
 // 全局缓存数据结构
 lazy_static! {
@@ -24,16 +25,15 @@ fn read_from_cache(point_id: i32) -> Option<PointEvent> {
     cache.get(&point_id).cloned()
 }
 
-fn read_from_protocol(point_id: i32,protocol_id :i32) -> Option<PointEvent> {
+fn read_from_protocol(protocol_id :i32,request:ReadPointRequest) -> Option<PointEvent> {
     let store = get_protocol_store().unwrap();
     let protocol_mutex = store.get_protocol(protocol_id).unwrap();
     // //为啥连在一起会报错? 所有权问题 需要细细品尝.为撒别的地方没有释放锁
     let binding = protocol_mutex?;
     // // 这儿会卡住.
-    let protocol = binding.lock().unwrap();
-    // let protocol = protocol_mutex?.lock().unwrap();
-
-    match protocol.read_point(point_id) {
+    let protocol = binding.read().unwrap();
+    let point_id=request.point_id.clone();
+    match protocol.read_point(request) {
         Ok(value) => Some(PointEvent {
             point_id,
             value,
@@ -45,12 +45,12 @@ fn read_from_protocol(point_id: i32,protocol_id :i32) -> Option<PointEvent> {
     }
 }
 
-pub fn read_point(point_id: i32,protocol_id :i32) -> Option<PointEvent> {
+pub fn read_point(protocol_id :i32,request:ReadPointRequest) -> Option<PointEvent> {
     // 先尝试从缓存中读取数据
-    let cached_event = read_from_cache(point_id);
+    let cached_event = read_from_cache(request.point_id);
     if cached_event.is_some() {
         return cached_event;
     }
     // 缓存中没有数据，则调用协议API读取数据
-    read_from_protocol(point_id,protocol_id)
+    read_from_protocol(protocol_id,request)
 }

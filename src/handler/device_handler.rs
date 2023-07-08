@@ -1,11 +1,14 @@
+use std::collections::HashMap;
 use axum::extract::{Path, State};
 use axum::Json;
-use sqlx::SqlitePool;
-use protocol_core::{Device, Point, PointWithProtocolId, Value};
+use sqlx::{Row, SqlitePool};
+use protocol_core::{AccessMode, DataType, Device, DeviceType, Point, PointWithProtocolId, Value};
 use crate::config::error::{EdgeError, Result};
 use crate::models::device::{CreatDevice, DeviceDTO};
 use crate::models::R;
 use crate::config::device_shadow;
+use sqlx::FromRow;
+
 pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<DeviceDTO>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
         .bind(id)
@@ -61,12 +64,38 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
             return Err(EdgeError::Message("point不存在,请检查请求参数".into()));
         },
     };
-   let res= device_shadow::read_point(point.point_id,point.protocol_id)
+   let res= device_shadow::read_point(point.protocol_id,point.into())
        .map(|e|e.value).unwrap_or(Value::Boolean(false));
     Ok(Json(res))
 }
 
 
+pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<i32, Vec<Device>>> {
+    let device_list = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device")
+        .fetch_all(&pool)
+        .await?;
+    let mut res:HashMap<i32,Vec<Device>>=HashMap::new();
+    for device in device_list.iter() {
+        let points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE device_id = ?")
+            .bind(device.id)
+            .fetch_all(&pool)
+            .await?;
+        let device_with_points = Device {
+            id: device.id,
+            name: device.name.clone(),
+            device_type: device.device_type.clone(),
+            points,
+            custom_data: device.custom_data.0.clone(),
+            protocol_id: device.protocol_id,
+        };
+        // 插入方式简洁处理
+        res.entry(device.protocol_id)
+            .or_insert_with(Vec::new)
+            .push(device_with_points);
+    }
+    tracing::info!("加载协议总数:{}",res.len());
+    Ok(res)
+}
 
 pub async fn create_device(State(pool): State<SqlitePool>, device: Json<CreatDevice>) -> Result<Json<R<DeviceDTO>>> {
     let created_device = sqlx::query_as::<_, DeviceDTO>(

@@ -8,6 +8,7 @@ use sqlx::{FromRow, Type};
 use std::error::Error;
 use std::fmt;
 use std::sync::{mpsc};
+use derive_getters::Getters;
 
 use crate::event_bus::PointEvent;
 
@@ -38,7 +39,7 @@ pub enum Value {
     String(&'static str),
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct Device {
     pub id: i32,
     pub name: String,
@@ -51,7 +52,7 @@ pub struct Device {
     pub protocol_id: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Type)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone)]
 pub enum DeviceType {
     #[serde(rename = "Gateway")]
     Gateway,
@@ -59,7 +60,7 @@ pub enum DeviceType {
     Independent,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct Point {
     pub id: i32,
     // 设备id
@@ -91,7 +92,7 @@ pub struct PointWithProtocolId {
     pub protocol_id: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Type)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone)]
 // #[serde(untagged)]
 pub enum DataType {
     #[serde(rename = "Integer")]
@@ -104,7 +105,7 @@ pub enum DataType {
     Boolean,
 }
 
-#[derive(Debug, Serialize, Deserialize, Type)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone)]
 pub enum AccessMode {
     #[serde(rename = "ReadWrite")]
     ReadWrite,
@@ -114,13 +115,47 @@ pub enum AccessMode {
     WriteOnly,
 }
 
+#[derive(Getters)]
+pub struct ReadPointRequest {
+    pub device_id: i32,
+    pub point_id: i32,
+    //节点地址
+    pub address: String,
+    pub data_type: DataType,
+    pub access_mode: AccessMode,
+    pub multiplier: f64,
+    pub precision: u32,
+
+}
+
+impl From<PointWithProtocolId>  for ReadPointRequest{
+    fn from(value: PointWithProtocolId) -> Self {
+        Self{
+            device_id: value.device_id,
+            point_id: value.point_id,
+            address: value.address,
+            data_type: value.data_type,
+            access_mode: value.access_mode,
+            multiplier: value.multiplier,
+            precision: value.precision,
+        }
+    }
+}
+#[derive(Getters)]
+pub struct WriterPointRequest {
+    pub device_id: i32,
+    pub point_id: i32,
+    pub value: Value,
+
+}
+
 /// Protocol trait for data processing.
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
-    fn read_point(&self, point_id: i32) -> Result<Value, String>;
+    fn read_point(&self, request: ReadPointRequest) -> Result<Value, String>;
 
     ///写点位,返回老点的值
-    fn write_point(&self, point_id: i32, value: Value) -> Result<Value, String>;
+    fn write_point(&self, request: WriterPointRequest) -> Result<Value, String>;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
