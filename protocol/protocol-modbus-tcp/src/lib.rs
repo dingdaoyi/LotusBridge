@@ -65,9 +65,9 @@ impl ModbusTcpProtocol {
             let port: Option<u16> = port_str.and_then(|s| s.parse().ok());
             config.tcp_port = port.unwrap_or(MODBUS_TCP_DEFAULT_PORT);
 
-            while let Err(err) = self.connect_modbus_slave(id, &address, config) {
+            if  let Err(err) = self.connect_modbus_slave(id, &address, config) {
                 println!("错误链接,请检查设备是否正常:{}", err);
-                tokio::time::sleep(Duration::from_secs(60)).await;
+                // tokio::time::sleep(Duration::from_secs(60)).await;
             }
         }
     }
@@ -126,13 +126,17 @@ impl Protocol for ModbusTcpProtocol {
         println!("协议包含数据:{:?}", device_list);
         self.sender = Some(sender);
         self.device_list = device_list;
-        self.init_modbus().await;
-        self.schedule_event().await;
+       self.init_modbus().await;
         Ok(())
     }
 
     fn stop(&self, _force: bool) -> Result<(), String> {
         todo!()
+    }
+
+    async fn start(&self) -> Result<(), String> {
+        self.schedule_event().await;
+        Ok(())
     }
 
     fn add_device(&self, _device: protocol_core::Device) -> Result<(), String> {

@@ -167,7 +167,10 @@ pub trait Protocol: Any + Send + Sync {
                   sender: mpsc::Sender<PointEvent>) -> Result<(), String>;
 
     /// 停止
-    fn stop(&self, force: bool) -> Result<(), String>;
+    fn stop(&self, force: bool) -> Result<(), String>;    
+
+    /// 启动
+   async fn start(&self) -> Result<(), String>;
 
     /// 添加设备
     fn add_device(&self, device: Device) -> Result<(), String>;
