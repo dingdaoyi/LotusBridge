@@ -40,7 +40,7 @@ pub async fn get_device_details(State(pool): State<SqlitePool>, Path(id): Path<i
         device_type: device.device_type,
         points,
         custom_data: device.custom_data.0,
-        protocol_id: device.protocol_id,
+        protocol_name: device.protocol_name,
     };
 
     Ok(Json(device_with_points))
@@ -50,7 +50,7 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
 
     let point = sqlx::query_as::<_, PointWithProtocolId>(r#"
     SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
-       tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_id AS protocol_id
+       tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
         FROM tb_point
         JOIN tb_device ON tb_point.device_id = tb_device.id
         WHERE tb_point.id = ?;
@@ -64,17 +64,17 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
             return Err(EdgeError::Message("point不存在,请检查请求参数".into()));
         },
     };
-   let res= device_shadow::read_point(point.protocol_id,point.into())
+   let res= device_shadow::read_point(point.protocol_name.clone(), point.into())
        .map(|e|e.value)?;
     Ok(Json(res))
 }
 
 
-pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<i32, Vec<Device>>> {
+pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String, Vec<Device>>> {
     let device_list = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device")
         .fetch_all(&pool)
         .await?;
-    let mut res:HashMap<i32,Vec<Device>>=HashMap::new();
+    let mut res:HashMap<String,Vec<Device>>=HashMap::new();
     for device in device_list.iter() {
         let points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE device_id = ?")
             .bind(device.id)
@@ -86,10 +86,10 @@ pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<i32, Ve
             device_type: device.device_type.clone(),
             points,
             custom_data: device.custom_data.0.clone(),
-            protocol_id: device.protocol_id,
+            protocol_name: device.protocol_name.clone(),
         };
         // 插入方式简洁处理
-        res.entry(device.protocol_id)
+        res.entry(device.protocol_name.clone())
             .or_insert_with(Vec::new)
             .push(device_with_points);
     }
@@ -99,12 +99,12 @@ pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<i32, Ve
 
 pub async fn create_device(State(pool): State<SqlitePool>, device: Json<CreatDevice>) -> Result<Json<R<DeviceDTO>>> {
     let created_device = sqlx::query_as::<_, DeviceDTO>(
-        "INSERT INTO tb_device (name, device_type, custom_data, protocol_id) VALUES (?, ?, ?, ?) RETURNING *",
+        "INSERT INTO tb_device (name, device_type, custom_data, protocol_name) VALUES (?, ?, ?, ?) RETURNING *",
     )
         .bind(&device.name)
         .bind(&device.device_type)
         .bind(sqlx::types::Json(&device.custom_data))
-        .bind(device.protocol_id)
+        .bind(device.protocol_name.clone())
         .fetch_one(&pool)
         .await?;
 
@@ -115,14 +115,14 @@ pub async fn update_device(
     State(pool): State<SqlitePool>,
     Path(id): Path<i32>,
     Json(device): Json<DeviceDTO>,
-) -> Result<Json<DeviceDTO>> {
+) -> Result<Json<R<String>>> {
     let updated_device = sqlx::query(
-        "UPDATE tb_device SET name = $1, device_type = $2, custom_data = $3, protocol_id = $4 WHERE id = $5",
+        "UPDATE tb_device SET name = $1, device_type = $2, custom_data = $3, protocol_name = $4 WHERE id = $5",
     )
         .bind(&device.name)
         .bind(&device.device_type)
         .bind(sqlx::types::Json(&device.custom_data))
-        .bind(device.protocol_id)
+        .bind(device.protocol_name)
         .bind(id)
         .execute(&pool)
         .await?;
@@ -130,7 +130,7 @@ pub async fn update_device(
     // 检查是否成功更新了设备
     if updated_device.rows_affected() > 0 {
         // 返回更新后的设备
-        Ok(Json(device))
+        Ok(Json(R::success()))
     } else {
         // 如果没有更新设备，则返回错误信息
         Err(EdgeError::Message("设备不存在".into()))

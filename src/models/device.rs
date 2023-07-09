@@ -11,8 +11,8 @@ pub struct CreatDevice {
     pub device_type: DeviceType,
     #[serde(rename = "customTata")]
     pub custom_data: Json<HashMap<String, String>>,
-    #[serde(rename = "protocolId")]
-    pub protocol_id: i32,
+    #[serde(rename = "protocolName")]
+    pub protocol_name: String,
 }
 
 #[derive(Debug, Serialize,Deserialize, FromRow)]
@@ -23,8 +23,8 @@ pub struct DeviceDTO {
     pub device_type: DeviceType,
     #[serde(rename = "customTata")]
     pub custom_data: Json<HashMap<String, String>>,
-    #[serde(rename = "protocolId")]
-    pub protocol_id: i32,
+    #[serde(rename = "protocolName")]
+    pub protocol_name: String,
 }
 
 impl From<DeviceDTO> for Device {
@@ -35,7 +35,7 @@ impl From<DeviceDTO> for Device {
             device_type: value.device_type,
             points: vec![],
             custom_data: value.custom_data.0,
-            protocol_id: value.protocol_id,
+            protocol_name: value.protocol_name,
         }
     }
 }

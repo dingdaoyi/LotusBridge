@@ -1,4 +1,5 @@
 pub mod event_bus;
+pub mod protocol_store;
 
 use std::any::Any;
 
@@ -8,6 +9,7 @@ use sqlx::{FromRow, Type};
 use std::error::Error;
 use std::fmt;
 use std::sync::{mpsc};
+use async_trait::async_trait;
 use derive_getters::Getters;
 use tokio::runtime::Handle;
 
@@ -49,8 +51,8 @@ pub struct Device {
     pub points: Vec<Point>,
     #[serde(rename = "customTata")]
     pub custom_data: HashMap<String, String>,
-    #[serde(rename = "protocolId")]
-    pub protocol_id: i32,
+    #[serde(rename = "protocolName")]
+    pub protocol_name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Type, Clone)]
@@ -90,7 +92,7 @@ pub struct PointWithProtocolId {
     pub precision: u32,
     pub description: String,
     pub part_number: Option<String>,
-    pub protocol_id: i32,
+    pub protocol_name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Type, Clone)]
@@ -151,6 +153,7 @@ pub struct WriterPointRequest {
 }
 
 /// Protocol trait for data processing.
+#[async_trait]
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
     fn read_point(&self, request: ReadPointRequest) -> Result<Value, String>;
@@ -160,9 +163,8 @@ pub trait Protocol: Any + Send + Sync {
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    fn initialize(&mut self, device_list: Vec<Device>,
-                  sender: mpsc::Sender<PointEvent>,
-                  handle:Handle) -> Result<(), String>;
+    async fn initialize(&mut self, device_list: Vec<Device>,
+                  sender: mpsc::Sender<PointEvent>) -> Result<(), String>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), String>;

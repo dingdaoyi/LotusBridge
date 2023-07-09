@@ -24,7 +24,7 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     let database_url = conf.data_base_config().sqlite_database_url();
     let pool = SqlitePool::connect(&database_url)
         .await?;
-    let app = match routers::register(pool.clone(),&conf) {
+    let app = match routers::register(pool.clone()) {
         Ok(router) => router,
         Err(EdgeError::Message(msg)) => {
             // tracing::error!();
