@@ -22,7 +22,7 @@ CREATE TABLE tb_device
     name        TEXT UNIQUE NOT NULL,
     device_type TEXT        NOT NULL,
     custom_data TEXT,
-    protocol_id INTEGER     NOT NULL
+    protocol_name TEXT     NOT NULL
 );
 
 CREATE TABLE tb_point

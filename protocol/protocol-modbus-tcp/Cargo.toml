@@ -3,16 +3,11 @@ name = "protocol-modbus-tcp"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-name = "protocol_modbus_tcp"
-crate-type = ["cdylib"]
-
 [dependencies]
 protocol-core = { path = "../protocol-core"  }
-yanbing-proc-macro = { path = "../../yanbing-proc-macro" }
 tokio = { version = "1.28", features = ["full"] }
 tracing = "0.1"
 #为啥选这个库,因为测试通过的
 modbus = "1.0"
 derive-getters = "0.3.0"
+async-trait = "0.1"

@@ -3,17 +3,17 @@ use axum::middleware::{from_extractor};
 use axum::routing::{delete, get, post, put};
 use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
+use protocol_core::protocol_store::ProtocolStore;
 use crate::handler::plugin_handler::create_plugin_config;
 use crate::handler::device_handler::{create_device, delete_device, get_device, read_point_value, update_device};
-use crate::config::cache::{get_protocol_store, ProtocolStore, set_protocol_store};
-use crate::config::EdgeConfig;
+use crate::config::cache::{get_protocol_store, set_protocol_store};
 use crate::config::error::EdgeError;
 use crate::handler::auth_handler;
 use crate::handler::auth_handler::login;
 use crate::handler::point_handler::{create_point, delete_point, get_point, update_point};
 
-pub fn register(pool: SqlitePool,conf:&EdgeConfig) -> Result<Router,EdgeError> {
-    set_protocol_store(ProtocolStore::new(conf.lib_path().to_string()))?;
+pub fn register(pool: SqlitePool) -> Result<Router,EdgeError> {
+    set_protocol_store(ProtocolStore::new())?;
     Ok(Router::new()
         .nest("/", routers())
         .with_state(pool)

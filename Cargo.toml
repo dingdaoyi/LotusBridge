@@ -8,11 +8,14 @@ edition = "2021"
 members = [
     "protocol/protocol-core",
     "protocol/protocol-modbus-tcp",
-    "yanbing-proc-macro"
 ]
+
+[features]
+modbus-tcp = ["protocol-modbus-tcp"]
+default=["modbus-tcp"]
 [dependencies]
 protocol-core = { path = "./protocol/protocol-core" }
-
+protocol-modbus-tcp = { path = "./protocol/protocol-modbus-tcp", optional = true }
 axum = { git = "https://gitee.com/diweiyunlian/axum.git", branch = "main", features = ["macros"] }
 rand = "0.8.5"
 sqlx = { version = "0.7.0-alpha.3", features = ["runtime-tokio", "sqlite", "chrono"] }
@@ -43,3 +46,4 @@ futures="0.3"
 # 依赖为啥不传递??
 pharos = "0.5"
 lazy_static = "1.4"
+paste = "1"
