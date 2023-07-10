@@ -4,8 +4,6 @@ use std::string::ToString;
 use std::sync::{Arc, mpsc, Mutex};
 use protocol_core::{Value, Protocol, Device, ReadPointRequest, WriterPointRequest};
 use protocol_core::event_bus::PointEvent;
-use std::time::Duration;
-use async_trait::async_trait;
 use modbus::{Client, Config, Transport};
 use protocol_core::protocol_store::ProtocolStore;
 
@@ -24,28 +22,6 @@ pub struct ModbusTcpProtocol {
 }
 
 impl ModbusTcpProtocol {
-    //TODO 当前问题,需要一直阻塞在线程里面,先实现功能后续再看问题
-    pub async fn schedule_event(&self) {
-        let sender = self.sender.clone().unwrap();
-        tracing::info!("开始发送数据...");
-        println!("开始发送数据...");
-        loop {
-            tokio::time::sleep(Duration::from_secs(1000)).await;
-            let event = PointEvent {
-                point_id: 100,
-                value: Value::Integer(42),
-            };
-            let res = sender.send(event);
-            match res {
-                Ok(_) => {
-                    tracing::info!("发送事件...");
-                }
-                Err(e) => {
-                    tracing::info!("发送事件失败...{:?}", e);
-                }
-            };
-        }
-    }
 
     fn connect_modbus_slave(&mut self, device_id: i32, address: &str, config: Config) -> Result<(), String> {
         let client = ModbusClient::new_with_cfg(address, config)
@@ -53,7 +29,7 @@ impl ModbusTcpProtocol {
         self.modbus_client.insert(device_id, Arc::new(Mutex::new(client)));
         Ok(())
     }
-    async fn init_modbus(&mut self) {
+    fn init_modbus(&mut self) {
         let device_list = std::mem::take(&mut self.device_list); // 获取所有权
         for Device { id, custom_data, .. } in device_list {
             let mut config = modbus::tcp::Config::default();
@@ -87,7 +63,6 @@ impl Default for ModbusTcpProtocol {
         }
     }
 }
-#[async_trait]
 impl Protocol for ModbusTcpProtocol {
     fn read_point(&self, request: ReadPointRequest) -> Result<Value, String> {
         let res = self.modbus_client
@@ -121,12 +96,11 @@ impl Protocol for ModbusTcpProtocol {
     fn write_point(&self, _request: WriterPointRequest) -> Result<Value, String> {
         Ok(Value::Integer(10))
     }
-
-   async fn initialize(&mut self, device_list: Vec<Device>, sender: mpsc::Sender<PointEvent>) -> Result<(), String> {
+    fn initialize(&mut self, device_list: Vec<Device>, sender: mpsc::Sender<PointEvent>) -> Result<(), String> {
         println!("协议包含数据:{:?}", device_list);
         self.sender = Some(sender);
         self.device_list = device_list;
-       self.init_modbus().await;
+       self.init_modbus();
         Ok(())
     }
 
@@ -134,10 +108,6 @@ impl Protocol for ModbusTcpProtocol {
         todo!()
     }
 
-    async fn start(&self) -> Result<(), String> {
-        self.schedule_event().await;
-        Ok(())
-    }
 
     fn add_device(&self, _device: protocol_core::Device) -> Result<(), String> {
         todo!()

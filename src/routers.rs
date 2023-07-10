@@ -7,7 +7,6 @@ use protocol_core::protocol_store::ProtocolStore;
 use crate::handler::plugin_handler::create_plugin_config;
 use crate::handler::device_handler::{create_device, delete_device, get_device, read_point_value, update_device};
 use crate::config::cache::{get_protocol_store, set_protocol_store};
-use crate::config::EdgeConfig;
 use crate::config::error::EdgeError;
 use crate::handler::auth_handler;
 use crate::handler::auth_handler::login;

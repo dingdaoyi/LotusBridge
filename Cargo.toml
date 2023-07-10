@@ -46,3 +46,4 @@ futures="0.3"
 # 依赖为啥不传递??
 pharos = "0.5"
 lazy_static = "1.4"
+paste = "1"

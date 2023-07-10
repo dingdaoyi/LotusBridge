@@ -1,18 +1,13 @@
 pub mod event_bus;
 pub mod protocol_store;
-
 use std::any::Any;
-
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use std::error::Error;
 use std::fmt;
 use std::sync::{mpsc};
-use async_trait::async_trait;
 use derive_getters::Getters;
-use tokio::runtime::Handle;
-
 use crate::event_bus::PointEvent;
 
 #[derive(Debug)]
@@ -153,7 +148,6 @@ pub struct WriterPointRequest {
 }
 
 /// Protocol trait for data processing.
-#[async_trait]
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
     fn read_point(&self, request: ReadPointRequest) -> Result<Value, String>;
@@ -163,14 +157,12 @@ pub trait Protocol: Any + Send + Sync {
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    async fn initialize(&mut self, device_list: Vec<Device>,
+    fn initialize(&mut self, device_list: Vec<Device>,
                   sender: mpsc::Sender<PointEvent>) -> Result<(), String>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), String>;    
 
-    /// 启动
-   async fn start(&self) -> Result<(), String>;
 
     /// 添加设备
     fn add_device(&self, device: Device) -> Result<(), String>;

@@ -6,10 +6,7 @@ use crate::handler::device_handler::load_all_device_details;
 
 //初始化协议
 pub(crate) async fn init_protocol(pool: Pool<Sqlite>) -> Result<()> {
-    // let protocols= load_all_protocol(pool.clone())
-    //     .await?;
     register_all_protocol().await;
-
     let (sender, receiver) = std::sync::mpsc::channel();
     let device_map = load_all_device_details(pool).await;
     let device_map = match device_map {
@@ -22,7 +19,6 @@ pub(crate) async fn init_protocol(pool: Pool<Sqlite>) -> Result<()> {
     for (protocol_name, device_list) in device_map.iter() {
         initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await?;
     }
-
     tokio::spawn(async move {
         for point_event in receiver {
             handler_event(point_event).await;
