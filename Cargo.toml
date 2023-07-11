@@ -10,10 +10,7 @@ members = [
     "protocol/protocol-modbus-tcp",
 ]
 
-[[bin]]
-name = "yanbing-edge"
-path = "src/main.rs"
-args = ["--release", ">", "app.log", "2>", "error.log"]
+[target.armv7-unknown-linux-gnueabihf]
 
 [features]
 modbus-tcp = ["protocol-modbus-tcp"]

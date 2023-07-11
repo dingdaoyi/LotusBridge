@@ -16,16 +16,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
       - name: Build
         run: cargo build --release
+
       - name: Archive artifacts
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            zip -r artifacts.zip target/release
-          else
+          if ("${{ matrix.os }}" -eq "windows-latest") {
+            Compress-Archive -Path "target/release" -DestinationPath "artifacts.zip" -Force
+          }
+          else {
             tar -czvf artifacts.tar.gz target/release
-          fi
-          sha256sum artifacts.* > sha256sum.txt
+          }
+          Get-FileHash artifacts.* | Format-List | Out-File -FilePath "sha256sum.txt"
+
+          if ("${{ matrix.os }}" -eq "ubuntu-latest") {
+            cargo build --release --target=armv7-unknown-linux-gnueabihf
+            tar -czvf artifacts-arm.tar.gz target/armv7-unknown-linux-gnueabihf/release
+            Get-FileHash artifacts-arm.* | Format-List | Out-File -Append -FilePath "sha256sum.txt"
+          }
+
         if: success()
 
       - name: Upload artifacts
@@ -35,4 +45,5 @@ jobs:
           path: |
             artifacts.zip
             artifacts.tar.gz
+            artifacts-arm.tar.gz
             sha256sum.txt
