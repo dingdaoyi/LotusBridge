@@ -27,12 +27,10 @@ jobs:
       - name: Archive artifacts
         run: |
           tar -czvf artifacts.tar.gz target/release
-          sha256sum artifacts.* > sha256sum.txt
 
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             cargo build --release --target=armv7-unknown-linux-gnueabihf
             tar -czvf artifacts-arm.tar.gz target/armv7-unknown-linux-gnueabihf/release
-            sha256sum artifacts-arm.* >> sha256sum-arm.txt
           fi
 
         if: success()
@@ -44,5 +42,3 @@ jobs:
           path: |
             artifacts.tar.gz
             artifacts-arm.tar.gz
-            sha256sum.txt
-            sha256sum-arm.txt
