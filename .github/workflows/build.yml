@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Build
+        run: cargo build --release
+      - name: Archive artifacts
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            zip -r artifacts.zip target/release
+          else
+            tar -czvf artifacts.tar.gz target/release
+          fi
+          sha256sum artifacts.* > sha256sum.txt
+        if: success()
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }}-package
+          path: |
+            artifacts.zip
+            artifacts.tar.gz
+            sha256sum.txt
