@@ -16,7 +16,7 @@ default=["modbus-tcp"]
 [dependencies]
 protocol-core = { path = "./protocol/protocol-core" }
 protocol-modbus-tcp = { path = "./protocol/protocol-modbus-tcp", optional = true }
-axum = { git = "https://gitee.com/diweiyunlian/axum.git", branch = "main", features = ["macros"] }
+axum = { version = "0.6.18", features = ["macros"] }
 rand = "0.8.5"
 sqlx = { version = "0.7.0-alpha.3", features = ["runtime-tokio", "sqlite", "chrono"] }
 rusqlite = "0.29.0"
@@ -36,7 +36,6 @@ libloading = "0.8.0"
 # 校验器 跟java validate类似
 validator = {version="0.16.0",features = ["derive"]}
 thiserror = "1.0.40"
-tower = { version = "0.4", features = ["util"] }
 #添加认证的依赖
 jsonwebtoken = "8.3"
 headers = "0.3"

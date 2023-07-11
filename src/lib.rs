@@ -5,10 +5,8 @@ pub mod routers;
 pub mod utils;
 pub mod middleware;
 pub mod initialize;
-
 use std::env;
-use tokio::net::TcpListener;
-use tracing::info;
+use std::net::SocketAddr;
 use sqlx::sqlite::{SqlitePool};
 use crate::config::auth::set_auth_config;
 use crate::config::EdgeConfig;
@@ -39,12 +37,12 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         }
         _ => {}
     }
-    // 初始化订阅端点
-    // init_subscribe_point(pool).await;
-    // Run it with hyper
-    let listener = TcpListener::bind("0.0.0.0:8000").await?;
-    info!("listening on {}", listener.local_addr()?);
-    axum::serve(listener, app)
+    // run our app with hyper
+    // `axum::Server` is a re-export of `hyper::Server`
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+    tracing::debug!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
         .await?;
     Ok(())
 }
