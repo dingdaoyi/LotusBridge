@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::convert::Into;
 use std::string::ToString;
 use std::sync::{Arc, mpsc, Mutex};
+use std::time::Duration;
 use protocol_core::{Value, Protocol, Device, ReadPointRequest, WriterPointRequest};
 use protocol_core::event_bus::PointEvent;
 use modbus::{Client, Config, Transport};
@@ -40,7 +41,7 @@ impl ModbusTcpProtocol {
             let port_str: Option<&String> = custom_data.get(MODBUS_TCP_PORT);
             let port: Option<u16> = port_str.and_then(|s| s.parse().ok());
             config.tcp_port = port.unwrap_or(MODBUS_TCP_DEFAULT_PORT);
-
+            config.tcp_connect_timeout = Some(Duration::from_secs(5));
             if  let Err(err) = self.connect_modbus_slave(id, &address, config) {
                 println!("错误链接,请检查设备是否正常:{}", err);
                 // tokio::time::sleep(Duration::from_secs(60)).await;

@@ -5,7 +5,6 @@ ENV CARGO_REGISTRY=https://github.com/rust-lang/crates.io-index
 
 # 复制项目代码到容器中
 COPY ./Cargo.toml .
-COPY ./Cargo.lock .
 COPY ./src ./src
 # 构建项目
 RUN cargo build --release

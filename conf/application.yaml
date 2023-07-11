@@ -11,3 +11,5 @@ auth:
   expireMinutes: 120 # 过期时间按照1分钟算
 plugin:
   libPath: ./target/debug
+server:
+  port: 30012
