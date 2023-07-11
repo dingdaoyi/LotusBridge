@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
 
     steps:
       - name: Checkout repository
@@ -22,19 +22,14 @@ jobs:
 
       - name: Archive artifacts
         run: |
-          if ("${{ matrix.os }}" -eq "windows-latest") {
-            Compress-Archive -Path "target/release" -DestinationPath "artifacts.zip" -Force
-          }
-          else {
-            tar -czvf artifacts.tar.gz target/release
-          }
-          Get-FileHash artifacts.* | Format-List | Out-File -FilePath "sha256sum.txt"
+          tar -czvf artifacts.tar.gz target/release
+          sha256sum artifacts.* > sha256sum.txt
 
-          if ("${{ matrix.os }}" -eq "ubuntu-latest") {
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             cargo build --release --target=armv7-unknown-linux-gnueabihf
             tar -czvf artifacts-arm.tar.gz target/armv7-unknown-linux-gnueabihf/release
-            Get-FileHash artifacts-arm.* | Format-List | Out-File -Append -FilePath "sha256sum.txt"
-          }
+            sha256sum artifacts-arm.* >> sha256sum-arm.txt
+          fi
 
         if: success()
 
@@ -43,7 +38,7 @@ jobs:
         with:
           name: ${{ matrix.os }}-package
           path: |
-            artifacts.zip
             artifacts.tar.gz
             artifacts-arm.tar.gz
             sha256sum.txt
+            sha256sum-arm.txt
