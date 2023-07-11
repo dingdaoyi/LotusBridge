@@ -77,24 +77,36 @@ impl Protocol for ModbusTcpProtocol {
             address: 0,
         });
         //TODO 需要将address区分,以及不同类型的返回值转化
-        let res: modbus::Result<Vec<u16>> = client.read_input_registers(address, 1);
-        match res {
-            Ok(data) => {
-                if let Some(value) = data.first().cloned() {
-                    // 或者根据实际需要选择适当的数字类型
-                    let value_as_number: i32 = value.into();
-                    Ok(Value::Integer(value_as_number))
-                } else {
-                    Err("No data received".to_string())
-                }
-            }
-            // continuation...
-            Err(err) => Err(err.to_string()),
-        }
+        let res: modbus::Result<Vec<u16>> = client.read_holding_registers(address, 1);
+        res.map(|data| {
+            data.first()
+                .cloned()
+                .map(|value| Value::Integer(value.into()))
+                .ok_or_else(|| "No data received".to_string())
+        })
+            .map_err(|err| err.to_string())?
     }
 
-    fn write_point(&self, _request: WriterPointRequest) -> Result<Value, String> {
-        Ok(Value::Integer(10))
+    fn write_point(&self, request: WriterPointRequest) -> Result<Value, String> {
+        let res = self.modbus_client
+            .get(&request.device_id)
+            .ok_or("modbus slave 不存在,请检查协议配置".to_string())?;
+        let mut client = res.lock().unwrap();
+
+        let Address { address, .. } = parse_address(request.address.as_str()).unwrap_or(Address {
+            device_id: 1,
+            function: 3,
+            address: 0,
+        });
+        //TODO 需要将address区分,以及不同类型的返回值转化
+      let value= match   request.value {
+           Value::Integer(va) => va as u16,
+           _ => {
+               return Err("暂未实现其他方式写入".to_string())
+           }
+       };
+       client.write_single_register(address, value).map_err(|err|err.to_string())?;
+        Ok(request.value)
     }
     fn initialize(&mut self, device_list: Vec<Device>, sender: mpsc::Sender<PointEvent>) -> Result<(), String> {
         println!("协议包含数据:{:?}", device_list);

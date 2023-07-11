@@ -24,7 +24,7 @@ impl Error for ProtocolError {}
 
 
 /// 解析值
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum Value {
     /// Integer value.
@@ -34,7 +34,7 @@ pub enum Value {
     /// Boolean value.
     Boolean(bool),
     //TODO 字符串无法实现copy,这儿先这么写,看有其他解决方案没
-    String(&'static str),
+    String(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
@@ -144,9 +144,27 @@ pub struct WriterPointRequest {
     pub device_id: i32,
     pub point_id: i32,
     pub value: Value,
-
+    pub address: String,
+    pub data_type: DataType,
+    pub access_mode: AccessMode,
+    pub multiplier: f64,
+    pub precision: u32,
 }
 
+impl From<PointWithProtocolId>  for WriterPointRequest{
+    fn from(value: PointWithProtocolId) -> Self {
+        Self{
+            device_id: value.device_id,
+            point_id: value.point_id,
+            value: Value::Boolean(false),
+            address: value.address,
+            data_type: value.data_type,
+            access_mode: value.access_mode,
+            multiplier: value.multiplier,
+            precision: value.precision,
+        }
+    }
+}
 /// Protocol trait for data processing.
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据

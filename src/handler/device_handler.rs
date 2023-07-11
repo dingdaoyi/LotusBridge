@@ -1,8 +1,10 @@
 use std::collections::HashMap;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::Json;
+use serde::Deserialize;
 use sqlx::SqlitePool;
-use protocol_core::{Device, Point, PointWithProtocolId, Value};
+use protocol_core::{Device, Point, PointWithProtocolId, Value, WriterPointRequest};
+use crate::config::cache::get_protocol_store;
 use crate::config::error::{EdgeError, Result};
 use crate::models::device::{CreatDevice, DeviceDTO};
 use crate::models::R;
@@ -47,7 +49,32 @@ pub async fn get_device_details(State(pool): State<SqlitePool>, Path(id): Path<i
 }
 
 pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Value>> {
+    let point = get_point_with_protocol_id(pool, id).await?;
+    let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
+        .map(|e| e.value)?;
+    Ok(Json(res))
+}
 
+#[derive(Debug, Deserialize)]
+pub struct WriterValue{
+    value:Value,
+}
+
+pub async fn writer_point_value(State(pool): State<SqlitePool>,
+                                Path(id): Path<i32>,
+                                Json(WriterValue{value, .. }): Json<WriterValue>) -> Result<Json<Value>> {
+    let point = get_point_with_protocol_id(pool, id).await?;
+    let store = get_protocol_store().unwrap();
+    let protocol_map = store.inner.read().unwrap();
+    let protocol = protocol_map.get(&point.protocol_name).ok_or(EdgeError::Message("协议不存在,检查服务配置".into()))?;
+    let mut request: WriterPointRequest = point.into();
+    request.value = value;
+    let res = protocol.read().unwrap()
+        .write_point(request)?;
+    Ok(Json(res))
+}
+
+async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWithProtocolId> {
     let point = sqlx::query_as::<_, PointWithProtocolId>(r#"
     SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
        tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
@@ -62,11 +89,9 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
         Some(point) => point,
         None => {
             return Err(EdgeError::Message("point不存在,请检查请求参数".into()));
-        },
+        }
     };
-   let res= device_shadow::read_point(point.protocol_name.clone(), point.into())
-       .map(|e|e.value)?;
-    Ok(Json(res))
+    Ok(point)
 }
 
 
@@ -74,7 +99,7 @@ pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String,
     let device_list = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device")
         .fetch_all(&pool)
         .await?;
-    let mut res:HashMap<String,Vec<Device>>=HashMap::new();
+    let mut res: HashMap<String, Vec<Device>> = HashMap::new();
     for device in device_list.iter() {
         let points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE device_id = ?")
             .bind(device.id)
