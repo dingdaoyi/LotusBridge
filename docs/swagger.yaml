@@ -1,0 +1,213 @@
+openapi: 3.0.0
+info:
+  title: yanbing-edge
+  description: 接口文档,可能有问题
+  version: 1.0.0
+
+paths:
+  /plugin/list:
+    get:
+      summary: 查询所有插件
+      operationId: getAllPluginConfigs
+      tags:
+        - 插件管理
+      parameters:
+        - name: pluginType
+          in: query
+          description: 插件类型,包含Protocol,DataOutput,RuleEngine
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PluginConfig'
+  /plugin/{id}:
+    get:
+      summary: 插件详情
+      operationId: getPluginConfigById
+      tags:
+        - 插件管理
+      parameters:
+        - name: id
+          in: path
+          description: 插件id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginConfig'
+        '404':
+          description: 插件未找到
+    put:
+      summary: 修改插件
+      operationId: updatePlugin
+      tags:
+        - 插件管理
+      parameters:
+        - name: id
+          in: path
+          description: 插件id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: 请求体
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginConfig'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/R'
+        '400':
+          description: Invalid request
+    delete:
+      summary: 删除插件
+      operationId: deletePluginConfigById
+      tags:
+        - 插件管理
+      parameters:
+        - name: id
+          in: path
+          description: 插件id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/R'
+        '404':
+          description: 插件未找到
+  /plugin:
+    post:
+      summary: 添加插件
+      operationId: createPlugin
+      tags:
+        - 插件管理
+      requestBody:
+        description: 请求体
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePluginConfig'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/R'
+        '400':
+          description: Invalid request
+  /login:
+    post:
+      summary: 用户登录
+      operationId: loginUser
+      tags:
+        - 认证接口
+      requestBody:
+        description: 登录信息
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginPayload'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/R'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+components:
+  schemas:
+    PluginConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: id
+          required: false
+        description:
+          type: string
+          description: 描述
+        formCustomization:
+          type: string
+          description: 自定义表单属性
+        name:
+          type: string
+          description: 表单名称
+        pluginType:
+          $ref: '#/components/schemas/PluginType'
+    CreatePluginConfig:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 协议名称
+        description:
+          type: string
+          nullable: true
+          description: 描述
+        formCustomization:
+          type: string
+          nullable: true
+          description: 自定义表单属性
+        pluginType:
+          $ref: '#/components/schemas/PluginType'
+    PluginType:
+      description: 插件类型、Protocol协议,DataOutput,北向应用,RuleEngine规则引擎
+      type: string
+      enum:
+        - Protocol
+        - DataOutput
+        - RuleEngine
+    R:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 响应码
+        success:
+          type: boolean
+          description: 响应是否成功
+        msg:
+          type: string
+          description: 响应消息
+        data:
+          nullable: true
+          description: 响应数据
+    LoginPayload:
+      type: object
+      properties:
+        username:
+          type: string
+          description: 用户名
+        password:
+          type: string
+          description: 密码

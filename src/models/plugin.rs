@@ -7,26 +7,42 @@ pub struct CreatePluginConfig {
     //协议名称
     pub name: String,
     pub description: Option<String>,
+    #[serde(rename = "formCustomization")]
     pub form_customization: Option<String>,
     // 插件类型
+    #[serde(rename = "pluginType")]
     pub plugin_type: PluginType
 }
 
-#[derive(Debug, Serialize,FromRow)]
+// 公共的插件配置,创建使用
+#[derive(Debug, Deserialize)]
+pub struct PluginConfigQuery {
+    //协议名称
+    pub name: Option<String>,
+
+    #[serde(rename = "pluginType")]
+    pub plugin_type: Option<PluginType>
+}
+
+// 插件配置
+#[derive(Debug, Serialize,FromRow,Deserialize)]
 pub struct PluginConfig {
     pub id: i32,
-    pub description: Option<String>,
-    pub form_customization: Option<String>,
     //协议名称
     pub name: String,
+    //描述
+    pub description: Option<String>,
+    //自定义表单属性
+    #[serde(rename = "formCustomization")]
+    pub form_customization: Option<String>,
     // 插件类型
+    #[serde(rename = "pluginType")]
     pub plugin_type: PluginType
 }
 
 
 // 插件类型
-#[derive(Debug, Serialize, Deserialize, Type)]
-#[serde(untagged)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone)]
 pub enum PluginType {
     // 系统插件
     #[serde(rename = "Protocol")]

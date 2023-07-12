@@ -4,7 +4,7 @@ use axum::routing::{delete, get, post, put};
 use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
 use protocol_core::protocol_store::ProtocolStore;
-use crate::handler::plugin_handler::create_plugin_config;
+use crate::handler::plugin_handler::{create_plugin_config, delete_plugin_config, list_plugin, plugin_config_details, update_plugin_config};
 use crate::handler::device_handler::{create_device, delete_device, get_device, read_point_value, update_device, writer_point_value};
 use crate::config::cache::{get_protocol_store, set_protocol_store};
 use crate::config::error::EdgeError;
@@ -12,7 +12,7 @@ use crate::handler::auth_handler;
 use crate::handler::auth_handler::login;
 use crate::handler::point_handler::{create_point, delete_point, get_point, update_point};
 
-pub fn register(pool: SqlitePool) -> Result<Router,EdgeError> {
+pub fn register(pool: SqlitePool) -> Result<Router, EdgeError> {
     set_protocol_store(ProtocolStore::new())?;
     Ok(Router::new()
         .nest("/", routers())
@@ -44,8 +44,14 @@ pub fn need_auth_routers() -> Router<SqlitePool> {
         .route("/point/value/:id", get(read_point_value))
         .route("/point/value/:id", post(writer_point_value))
         //创建插件
-        .route("/plugin", post(create_plugin_config),
+        .route("/plugin", post(create_plugin_config))
+        .route("/plugin/list", get(list_plugin))
+        .route("/plugin/:id",
+               put(update_plugin_config)
+                   .get(plugin_config_details)
+                   .delete(delete_plugin_config),
         )
+
         .layer(from_extractor::<auth_handler::Claims>())
 }
 
