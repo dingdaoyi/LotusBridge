@@ -26,8 +26,8 @@ jobs:
 
       - name: Archive artifacts
         run: |
-          tar -czvf artifacts.tar.gz target/release
-# 暂时不 考虑交叉编译
+          tar -czvf artifacts.tar.gz target/release/yanbing-edge conf
+        # 暂时不 考虑交叉编译
 #          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
 #            cargo build --release --target=armv7-unknown-linux-gnueabihf
 #            tar -czvf artifacts-arm.tar.gz target/armv7-unknown-linux-gnueabihf/release
