@@ -1,20 +1,15 @@
-CREATE TABLE IF NOT EXISTS plugin_config
+create table plugin_config
 (
-    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-    description        TEXT,
+    id                 INTEGER primary key autoincrement,
+    description        TEXT ,
     form_customization TEXT,
-    plugin_type        TEXT
+    plugin_type        TEXT,
+    name               text default '' not null
 );
 
-CREATE TABLE IF NOT EXISTS protocol_config
-(
-    id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    name             TEXT UNIQUE NOT NULL,
-    path             TEXT,
-    description      TEXT,
-    plugin_config_id INTEGER,
-    FOREIGN KEY (plugin_config_id) REFERENCES plugin_config (id)
-);
+create unique index plugin_config_name_index
+    on plugin_config (name);
+
 
 CREATE TABLE tb_device
 (
