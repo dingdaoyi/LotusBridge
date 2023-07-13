@@ -4,8 +4,9 @@ use protocol_core::{AccessMode, DataType};
 
 #[derive(Debug, Serialize, Deserialize,FromRow)]
 pub struct CreatePoint {
-    // 设备id
-    pub device_id: i32,
+    // 设备设备组id
+    #[serde(rename = "groupId")]
+    pub group_id: i32,
     //地址
     pub address: String,
     #[serde(rename = "dataType")]

@@ -15,6 +15,7 @@ pub struct CreatDevice {
     pub protocol_name: String,
 }
 
+
 #[derive(Debug, Serialize,Deserialize, FromRow)]
 pub struct DeviceDTO {
     pub id: i32,
@@ -39,3 +40,20 @@ impl From<DeviceDTO> for Device {
         }
     }
 }
+
+#[derive(Debug, Deserialize,Serialize,FromRow)]
+pub struct DeviceGroup {
+    pub id: i32,
+    pub name: String,
+    pub interval: i32,
+    pub device_id: i32,
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDeviceGroup {
+    pub name: String,
+    pub interval: i32,
+    pub device_id: i32,
+}
+

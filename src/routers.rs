@@ -5,12 +5,12 @@ use crate::handler::things::{get_product_by_id, get_product_funcs};
 use sqlx::{SqlitePool};
 use protocol_core::protocol_store::ProtocolStore;
 use crate::handler::plugin_handler::{create_plugin_config, delete_plugin_config, list_plugin, plugin_config_details, update_plugin_config};
-use crate::handler::device_handler::{create_device, delete_device, get_device, read_point_value, update_device, writer_point_value};
+use crate::handler::device_handler::{create_device, create_device_group, delete_device, delete_device_group, get_device, get_device_group, list_device, list_device_group, update_device, update_device_group};
 use crate::config::cache::{get_protocol_store, set_protocol_store};
 use crate::config::error::EdgeError;
 use crate::handler::auth_handler;
 use crate::handler::auth_handler::login;
-use crate::handler::point_handler::{create_point, delete_point, get_point, update_point};
+use crate::handler::point_handler::{create_point, delete_point, get_point, read_point_value, update_point, writer_point_value};
 
 pub fn register(pool: SqlitePool) -> Result<Router, EdgeError> {
     set_protocol_store(ProtocolStore::new())?;
@@ -32,10 +32,18 @@ pub fn need_auth_routers() -> Router<SqlitePool> {
         .route("/things", get(get_product_funcs))
         .route("/things/:id", get(get_product_by_id))
         // 设备
-        .route("/device/:id", get(get_device))
-        .route("/device", post(create_device))
-        .route("/device/:id", put(update_device))
-        .route("/device/:id", delete(delete_device))
+        .route("/device/:id", get(get_device)
+            .put(update_device).delete(delete_device))
+        .route("/device", post(create_device)
+            .get(list_device))
+        //创建设备组
+        .route("/device-group", post(create_device_group))
+        .route("/device-group/list/:device_id", get(list_device_group))
+        .route("/device-group/:id",
+               put(update_device_group)
+                   .get(get_device_group)
+                   .delete(delete_device_group),
+        )
         //端点
         .route("/point/:id", get(get_point))
         .route("/point", post(create_point))

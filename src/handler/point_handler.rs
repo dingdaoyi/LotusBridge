@@ -1,7 +1,10 @@
 use axum::extract::{Path, State};
 use axum::Json;
+use serde::Deserialize;
 use sqlx::SqlitePool;
-use protocol_core::Point;
+use protocol_core::{Point, PointWithProtocolId, Value, WriterPointRequest};
+use crate::config::cache::get_protocol_store;
+use crate::config::device_shadow;
 use crate::config::error::{EdgeError, Result};
 use crate::models::point::CreatePoint;
 use crate::models::R;
@@ -21,10 +24,27 @@ pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> R
 }
 
 pub async fn create_point(State(pool): State<SqlitePool>,Json(point): Json<CreatePoint>) -> Result<Json<R<Point>>> {
+
+   let device_id= sqlx::query_scalar::<_, i32>("select device_id  from tb_device_group where id =?")
+        .bind(point.group_id)
+        .fetch_optional(&pool)
+        .await?;
+    let device_id = device_id.ok_or(EdgeError::Message("设备组不存在,请检查参数!".into()))?;
+    let exists = sqlx::query("SELECT 1 FROM tb_point WHERE device_id = ? AND address = ?")
+        .bind(&device_id)
+        .bind(&point.address)
+        .fetch_optional(&pool)
+        .await?;
+
+    if exists.is_some() {
+        return Err(EdgeError::Message("当前设备下点位已存在,请勿重复添加!".into()));
+    }
+
     let created_point = sqlx::query_as::<_, Point>(
-        "INSERT INTO tb_point (device_id, address, data_type, access_mode, multiplier, precision, description, part_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *",
+        "INSERT INTO tb_point (device_id,group_id, address, data_type, access_mode, multiplier, precision, description, part_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?) RETURNING *",
     )
-        .bind(point.device_id)
+        .bind(device_id)
+        .bind(point.group_id)
         .bind(&point.address)
         .bind(&point.data_type)
         .bind(&point.access_mode)
@@ -75,4 +95,51 @@ pub async fn delete_point(State(pool): State<SqlitePool>, Path(point_id): Path<i
         .await?;
 
     Ok(Json(R::success()))
+}
+
+
+pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<Value>>> {
+    let point = get_point_with_protocol_id(pool, id).await?;
+    let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
+        .map(|e| e.value)?;
+    Ok(Json(R::success_with_data(res)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WriterValue{
+    value:Value,
+}
+
+pub async fn writer_point_value(State(pool): State<SqlitePool>,
+                                Path(id): Path<i32>,
+                                Json(WriterValue{value, .. }): Json<WriterValue>) -> Result<Json<R<Value>>> {
+    let point = get_point_with_protocol_id(pool, id).await?;
+    let store = get_protocol_store().unwrap();
+    let protocol_map = store.inner.read().unwrap();
+    let protocol = protocol_map.get(&point.protocol_name).ok_or(EdgeError::Message("协议不存在,检查服务配置".into()))?;
+    let mut request: WriterPointRequest = point.into();
+    request.value = value;
+    let res = protocol.read().unwrap()
+        .write_point(request)?;
+    Ok(Json(R::success_with_data(res)))
+}
+
+async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWithProtocolId> {
+    let point = sqlx::query_as::<_, PointWithProtocolId>(r#"
+    SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
+       tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
+        FROM tb_point
+        JOIN tb_device ON tb_point.device_id = tb_device.id
+        WHERE tb_point.id = ?;
+    "#)
+        .bind(id)
+        .fetch_optional(&pool)
+        .await?;
+    let point = match point {
+        Some(point) => point,
+        None => {
+            return Err(EdgeError::Message("point不存在,请检查请求参数".into()));
+        }
+    };
+    Ok(point)
 }

@@ -63,6 +63,10 @@ pub struct Point {
     pub id: i32,
     // 设备id
     pub device_id: i32,
+
+    // 设备id
+    pub group_id: i32,
+
     //地址
     pub address: String,
     #[serde(rename = "dataType")]

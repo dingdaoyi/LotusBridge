@@ -1,99 +1,11 @@
 use std::collections::HashMap;
 use axum::extract::{Path, State};
 use axum::Json;
-use serde::Deserialize;
 use sqlx::SqlitePool;
-use protocol_core::{Device, Point, PointWithProtocolId, Value, WriterPointRequest};
-use crate::config::cache::get_protocol_store;
+use protocol_core::{Device, Point};
 use crate::config::error::{EdgeError, Result};
-use crate::models::device::{CreatDevice, DeviceDTO};
+use crate::models::device::{CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceGroup};
 use crate::models::R;
-use crate::config::device_shadow;
-
-
-pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<DeviceDTO>> {
-    let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
-        .bind(id)
-        .fetch_optional(&pool)
-        .await?;
-    match device {
-        Some(device) => Ok(Json(device)),
-        None => {
-            // 没有找到匹配的行，返回自定义错误或其他逻辑
-            Err(EdgeError::Message("设备不存在".into()))
-        }
-    }
-}
-
-pub async fn get_device_details(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Device>> {
-    let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
-        .bind(id)
-        .fetch_one(&pool)
-        .await?;
-
-    let points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE device_id = ?")
-        .bind(device.id)
-        .fetch_all(&pool)
-        .await?;
-
-    let device_with_points = Device {
-        id: device.id,
-        name: device.name,
-        device_type: device.device_type,
-        points,
-        custom_data: device.custom_data.0,
-        protocol_name: device.protocol_name,
-    };
-
-    Ok(Json(device_with_points))
-}
-
-pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Value>> {
-    let point = get_point_with_protocol_id(pool, id).await?;
-    let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
-        .map(|e| e.value)?;
-    Ok(Json(res))
-}
-
-#[derive(Debug, Deserialize)]
-pub struct WriterValue{
-    value:Value,
-}
-
-pub async fn writer_point_value(State(pool): State<SqlitePool>,
-                                Path(id): Path<i32>,
-                                Json(WriterValue{value, .. }): Json<WriterValue>) -> Result<Json<Value>> {
-    let point = get_point_with_protocol_id(pool, id).await?;
-    let store = get_protocol_store().unwrap();
-    let protocol_map = store.inner.read().unwrap();
-    let protocol = protocol_map.get(&point.protocol_name).ok_or(EdgeError::Message("协议不存在,检查服务配置".into()))?;
-    let mut request: WriterPointRequest = point.into();
-    request.value = value;
-    let res = protocol.read().unwrap()
-        .write_point(request)?;
-    Ok(Json(res))
-}
-
-async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWithProtocolId> {
-    let point = sqlx::query_as::<_, PointWithProtocolId>(r#"
-    SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
-       tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
-        FROM tb_point
-        JOIN tb_device ON tb_point.device_id = tb_device.id
-        WHERE tb_point.id = ?;
-    "#)
-        .bind(id)
-        .fetch_optional(&pool)
-        .await?;
-    let point = match point {
-        Some(point) => point,
-        None => {
-            return Err(EdgeError::Message("point不存在,请检查请求参数".into()));
-        }
-    };
-    Ok(point)
-}
-
 
 pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String, Vec<Device>>> {
     let device_list = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device")
@@ -136,6 +48,28 @@ pub async fn create_device(State(pool): State<SqlitePool>, device: Json<CreatDev
     Ok(Json(R::success_with_data(created_device)))
 }
 
+pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<DeviceDTO>>> {
+    let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&pool)
+        .await?;
+    match device {
+        Some(device) => Ok(Json(R::success_with_data(device))),
+        None => {
+            // 没有找到匹配的行，返回自定义错误或其他逻辑
+            Err(EdgeError::Message("设备不存在".into()))
+        }
+    }
+}
+
+
+pub async fn list_device(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<DeviceDTO>>>> {
+    let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE")
+        .fetch_all(&pool)
+        .await?;
+    Ok(Json(R::success_with_data(device)))
+}
+
 pub async fn update_device(
     State(pool): State<SqlitePool>,
     Path(id): Path<i32>,
@@ -169,4 +103,72 @@ pub async fn delete_device(State(pool): State<SqlitePool>, Path(device_id): Path
         .await?;
 
     Ok(Json(R::success()))
+}
+
+pub async fn create_device_group(State(pool): State<SqlitePool>, device_group: Json<CreateDeviceGroup>) -> Result<Json<R<DeviceGroup>>> {
+    let created_device_group = sqlx::query_as::<_, DeviceGroup>(
+        "INSERT INTO tb_device_group (name, interval, device_id) VALUES (?, ?, ?) RETURNING *",
+    )
+        .bind(&device_group.name)
+        .bind(device_group.interval)
+        .bind(device_group.device_id)
+        .fetch_one(&pool)
+        .await.map_err(|_|EdgeError::Message("设备id不存在".into()))?;
+
+    Ok(Json(R::success_with_data(created_device_group)))
+}
+
+pub async fn get_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<DeviceGroup>>> {
+    let device_group = sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&pool)
+        .await?;
+
+    match device_group {
+        Some(device_group) => Ok(Json(R::success_with_data(device_group))),
+        None => Err(EdgeError::Message("设备组不存在".into())),
+    }
+}
+
+
+pub async fn list_device_group(State(pool): State<SqlitePool>, Path(device_id): Path<i32>) -> Result<Json<R<Vec<DeviceGroup>>>> {
+    let device_group_list = sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group WHERE device_id = ?")
+        .bind(device_id)
+        .fetch_all(&pool)
+        .await?;
+    Ok(Json(R::success_with_data(device_group_list)))
+}
+
+
+pub async fn update_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>, device_group: Json<DeviceGroup>) -> Result<Json<R<String>>> {
+    let updated_device_group = sqlx::query(
+        "UPDATE tb_device_group SET name = $1, interval = $2, device_id = $3 WHERE id = $4",
+    )
+        .bind(&device_group.name)
+        .bind(device_group.interval)
+        .bind(device_group.device_id)
+        .bind(id)
+        .execute(&pool)
+        .await?;
+
+    if updated_device_group.rows_affected() > 0 {
+        Ok(Json(R::success()))
+    } else {
+        Err(EdgeError::Message("设备组不存在".into()))
+    }
+}
+
+pub async fn delete_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<String>>> {
+    let deleted_device_group = sqlx::query(
+        "DELETE FROM tb_device_group WHERE id = $1",
+    )
+        .bind(id)
+        .execute(&pool)
+        .await?;
+
+    if deleted_device_group.rows_affected() > 0 {
+        Ok(Json(R::success()))
+    } else {
+        Err(EdgeError::Message("设备组不存在".into()))
+    }
 }
