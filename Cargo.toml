@@ -11,7 +11,7 @@ members = [
 ]
 
 [target.armv7-unknown-linux-gnueabihf]
-linker = "arm-linux-gnueabihf-gcc"
+#linker = "arm-linux-gnueabihf-gcc"
 
 [features]
 modbus-tcp = ["protocol-modbus-tcp"]
