@@ -11,6 +11,7 @@ members = [
 ]
 
 [target.armv7-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
 
 [features]
 modbus-tcp = ["protocol-modbus-tcp"]
@@ -48,4 +49,6 @@ futures="0.3"
 pharos = "0.5"
 lazy_static = "1.4"
 paste = "1"
-axum-swagger-ui = "0.2.2"
+# 可以做swagger的,暂时不管
+#utoipa-swagger-ui = { version = "3", features = ["axum"] }
+#utoipa = { version = "3", features = ["axum_extras"] }
