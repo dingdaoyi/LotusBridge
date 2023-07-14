@@ -257,6 +257,111 @@ paths:
                 $ref: '#/components/schemas/RString'
         '404':
           description: 设备组不存在
+  /device/{id}:
+    get:
+      summary: Get device by ID
+      operationId: getDevice
+      tags:
+        - 设备管理
+      parameters:
+        - name: id
+          in: path
+          description: Device ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDTO'
+        '404':
+          description: Device not found
+    put:
+      summary: Update device by ID
+      operationId: updateDevice
+      tags:
+        - 设备管理
+      parameters:
+        - name: id
+          in: path
+          description: Device ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceDTO'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RString'
+        '404':
+          description: Device not found
+
+  /device:
+    get:
+      summary: Get all devices
+      operationId: listDevices
+      tags:
+        - 设备管理
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDTO'
+    post:
+      summary: Create a new device
+      operationId: createDevice
+      tags:
+        - 设备管理
+      requestBody:
+        description: Request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDevice'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDTO'
+
+  /device/{device_id}:
+    delete:
+      summary: Delete device by ID
+      operationId: deleteDevice
+      tags:
+        - 设备管理
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RString'
+
 
 components:
   schemas:
@@ -398,3 +503,37 @@ components:
         msg:
           type: string
           description: 响应消息
+    DeviceDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        deviceType:
+          $ref: '#/components/schemas/DeviceType'
+        customData:
+          type: object
+          additionalProperties:
+            type: string
+        protocolName:
+          type: string
+
+    DeviceType:
+      type: string
+      enum: [type1, type2, type3]
+
+    CreateDevice:
+      type: object
+      properties:
+        name:
+          type: string
+        deviceType:
+          $ref: '#/components/schemas/DeviceType'
+        customData:
+          type: object
+          additionalProperties:
+            type: string
+        protocolName:
+          type: string
+
