@@ -15,3 +15,5 @@
 armv7-unknown-linux-gnueabihf
 
 armv7-unknown-linux-musleabihf
+
+export SQLITE3_STATIC=1
