@@ -10,3 +10,8 @@
 3,现在主程序采用不安全的方式启动的协议库,并且协议库需要在程序中waite等待,要不然会出现错误
 
 4,在写接口时,参数要求先 path 再body 要不报错
+
+## 交叉编译悟空派
+armv7-unknown-linux-gnueabihf
+
+armv7-unknown-linux-musleabihf
