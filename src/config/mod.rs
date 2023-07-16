@@ -10,6 +10,7 @@ pub mod error;
 pub mod cache;
 pub mod auth;
 pub mod device_shadow;
+pub mod db;
 
 #[derive(Getters)]
 pub struct EdgeConfig {
