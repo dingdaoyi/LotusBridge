@@ -139,6 +139,13 @@ pub async fn list_device_group(State(pool): State<SqlitePool>, Path(device_id): 
     Ok(Json(R::success_with_data(device_group_list)))
 }
 
+///定时任务启动
+pub async fn list_all_device_group(pool: SqlitePool) -> Result<Vec<DeviceGroup>> {
+    let device_group_list = sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group")
+        .fetch_all(&pool)
+        .await?;
+    Ok(device_group_list)
+}
 
 pub async fn update_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>, device_group: Json<DeviceGroup>) -> Result<Json<R<String>>> {
     let updated_device_group = sqlx::query(

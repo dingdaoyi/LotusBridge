@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::sync::PoisonError;
 use axum::{
     http::StatusCode,
@@ -17,6 +18,28 @@ pub enum EdgeError {
     ValidationErrors(ValidationErrors),
     AuthError(AuthError),
     Message(String),
+}
+use std::fmt;
+
+// ... (之前的代码保持不变)
+
+impl Display for EdgeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EdgeError::SqlxError(sqlx::error::Error::Io(err)) => write!(f, "数据库处理异常: {}", err),
+            EdgeError::SqlxError(err) => write!(f, "数据库未知异常: {}", err),
+            EdgeError::Message(err) => write!(f, "{}", err),
+            EdgeError::ValidationErrors(validation_errors) => write!(f, "{}", validation_errors),
+            EdgeError::AuthError(auth) => {
+                match auth {
+                    AuthError::WrongCredentials => write!(f, "认证失败: Wrong credentials"),
+                    AuthError::MissingCredentials => write!(f, "认证失败: Missing credentials"),
+                    AuthError::TokenCreation => write!(f, "认证失败: Token creation error"),
+                    AuthError::InvalidToken => write!(f, "认证失败: Invalid token"),
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug)]

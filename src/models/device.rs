@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow};
 use sqlx::types::Json;
 use protocol_core::{Device, DeviceType};
+use crate::models::point::PointValue;
 
 #[derive(Debug, Deserialize)]
 pub struct CreatDevice {
@@ -41,7 +42,7 @@ impl From<DeviceDTO> for Device {
     }
 }
 
-#[derive(Debug, Deserialize,Serialize,FromRow)]
+#[derive(Debug, Deserialize,Serialize,FromRow, Clone)]
 pub struct DeviceGroup {
     pub id: i32,
     pub name: String,
@@ -56,4 +57,26 @@ pub struct CreateDeviceGroup {
     pub interval: i32,
     pub device_id: i32,
 }
+
+
+#[derive(Debug, Clone)]
+pub struct DeviceGroupValue {
+    pub id: i32,
+    pub name: String,
+    pub device_id: i32,
+    pub point_values: Vec<PointValue>
+}
+
+impl From<DeviceGroup> for DeviceGroupValue{
+    fn from(device_group: DeviceGroup) -> Self {
+        Self{
+            id: device_group.id,
+            name: device_group.name,
+            device_id: device_group.device_id,
+            point_values: vec![],
+        }
+    }
+}
+
+
 

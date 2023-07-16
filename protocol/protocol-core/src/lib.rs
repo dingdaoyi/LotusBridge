@@ -80,10 +80,11 @@ pub struct Point {
     pub part_number: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow,Clone)]
 pub struct PointWithProtocolId {
     pub point_id: i32,
     pub device_id: i32,
+    pub group_id: i32,
     pub address: String,
     pub data_type: DataType,
     pub access_mode: AccessMode,

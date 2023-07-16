@@ -17,3 +17,7 @@ armv7-unknown-linux-gnueabihf
 armv7-unknown-linux-musleabihf
 
 export SQLITE3_STATIC=1
+
+CC=arm-linux-musleabihf-cc SQLITE3_STATIC=1 cargo build --target arm-unknown-linux-musleabihf
+
+```

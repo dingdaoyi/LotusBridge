@@ -2,11 +2,13 @@ use axum::extract::{Path, State};
 use axum::Json;
 use serde::Deserialize;
 use sqlx::SqlitePool;
-use protocol_core::{Point, PointWithProtocolId, Value, WriterPointRequest};
+use protocol_core::{Point, PointWithProtocolId, ReadPointRequest, Value, WriterPointRequest};
 use crate::config::cache::get_protocol_store;
+use crate::config::db::get_conn;
 use crate::config::device_shadow;
 use crate::config::error::{EdgeError, Result};
-use crate::models::point::CreatePoint;
+use crate::models::device::{DeviceGroup, DeviceGroupValue};
+use crate::models::point::{CreatePoint, PointValue};
 use crate::models::R;
 
 pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Point>> {
@@ -105,6 +107,37 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
     Ok(Json(R::success_with_data(res)))
 }
 
+use futures::future::join_all;
+use tokio::task;
+
+pub async fn read_point_group_value(device_group: DeviceGroup) -> Result<DeviceGroupValue> {
+    let point_list = get_points_with_group_id(get_conn(), device_group.id).await?;
+
+    // 使用异步并发并行读取每个点的值
+    let tasks = point_list.iter().map(|point| {
+        let protocol_name = point.protocol_name.clone();
+        let point_clone = point.clone();
+        task::spawn(async move {
+            let value = device_shadow::read_point(protocol_name, point_clone.clone().into())
+                .map_or_else(|err| Value::String(err.to_string()), |e| e.value);
+            let mut point_value: PointValue = point_clone.into();
+            point_value.value = Some(value);
+            point_value
+        })
+    });
+     let results=join_all(tasks).await;
+    for result in &results {
+        if let Err(err) = result {
+            return Err(EdgeError::Message(err.to_string()));
+        }
+    }
+    let value_list: Vec<PointValue> = results.into_iter().map(|res|res.unwrap()).collect();
+    let mut res: DeviceGroupValue = device_group.into();
+    res.point_values = value_list;
+    Ok(res)
+}
+
+
 #[derive(Debug, Deserialize)]
 pub struct WriterValue{
     value:Value,
@@ -126,7 +159,7 @@ pub async fn writer_point_value(State(pool): State<SqlitePool>,
 
 async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWithProtocolId> {
     let point = sqlx::query_as::<_, PointWithProtocolId>(r#"
-    SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
+    SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.group_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
        tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
         FROM tb_point
         JOIN tb_device ON tb_point.device_id = tb_device.id
@@ -142,4 +175,19 @@ async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWi
         }
     };
     Ok(point)
+}
+
+///根据设备group_id查询
+async fn get_points_with_group_id(pool: SqlitePool, group_id: i32) -> Result<Vec<PointWithProtocolId>> {
+    let point_list = sqlx::query_as::<_, PointWithProtocolId>(r#"
+        SELECT tb_point.id AS point_id, tb_point.device_id,tb_point.group_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
+               tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
+        FROM tb_point
+        JOIN tb_device ON tb_point.device_id = tb_device.id
+        WHERE tb_point.group_id = ?;
+    "#)
+        .bind(group_id)
+        .fetch_all(&pool)
+        .await?;
+    Ok(point_list)
 }
