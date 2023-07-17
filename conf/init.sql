@@ -11,6 +11,17 @@ create unique index plugin_config_name_index
     on plugin_config (name);
 
 
+CREATE TABLE tb_export_config
+(
+    id            INTEGER PRIMARY KEY,
+    name          TEXT                                                    NOT NULL,
+    configuration TEXT                                                    NOT NULL,
+    description   TEXT                                                    NOT NULL,
+    plugin_id     INTEGER REFERENCES plugin_config (id) ON DELETE CASCADE NOT NULL,
+    UNIQUE (name, plugin_id)
+);
+
+
 CREATE TABLE tb_device
 (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +50,7 @@ CREATE TABLE tb_point
     precision   INTEGER NOT NULL,
     description TEXT    NOT NULL,
     part_number TEXT,
-    device_id INTEGER REFERENCES tb_device (id) ON DELETE CASCADE,
-    group_id INTEGER REFERENCES tb_device_group (id) ON DELETE CASCADE,
+    device_id   INTEGER REFERENCES tb_device (id) ON DELETE CASCADE,
+    group_id    INTEGER REFERENCES tb_device_group (id) ON DELETE CASCADE,
     UNIQUE (device_id, address)
 );
