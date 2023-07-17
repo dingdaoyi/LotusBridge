@@ -8,7 +8,7 @@ use crate::config::db::get_conn;
 use crate::config::device_shadow;
 use crate::config::error::{EdgeError, Result};
 use crate::models::device::{DeviceGroup, DeviceGroupValue};
-use crate::models::point::{CreatePoint, PointValue};
+use crate::models::point::{CreatePoint};
 use crate::models::R;
 
 pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Point>> {
@@ -109,6 +109,7 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
 
 use futures::future::join_all;
 use tokio::task;
+use export_core::model::PointValue;
 
 pub async fn read_point_group_value(device_group: DeviceGroup) -> Result<DeviceGroupValue> {
     let point_list = get_points_with_group_id(get_conn(), device_group.id).await?;

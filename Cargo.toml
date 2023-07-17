@@ -8,6 +8,7 @@ edition = "2021"
 members = [
     "protocol/protocol-core",
     "protocol/protocol-modbus-tcp",
+    "data-export/export-core",
 ]
 
 [target.armv7-unknown-linux-gnueabihf]
@@ -18,6 +19,7 @@ modbus-tcp = ["protocol-modbus-tcp"]
 default=["modbus-tcp"]
 [dependencies]
 protocol-core = { path = "./protocol/protocol-core" }
+export-core = { path = "data-export/export-core" }
 protocol-modbus-tcp = { path = "./protocol/protocol-modbus-tcp", optional = true }
 axum = { version = "0.6.18", features = ["macros"] }
 rand = "0.8.5"

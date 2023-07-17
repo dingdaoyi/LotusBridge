@@ -361,7 +361,99 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RString'
-
+  /export-config:
+    post:
+      summary: 创建导出配置
+      tags:
+        - 导出配置
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportConfig'
+      responses:
+        '200':
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RExportConfig'
+  /export-config/{id}:
+    get:
+      summary: 获取导出配置详情
+      tags:
+        - 导出配置
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RExportConfig'
+    put:
+      summary: 更新导出配置
+      tags:
+        - 导出配置
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportConfig'
+      responses:
+        '200':
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+    delete:
+      summary: 删除导出配置
+      tags:
+        - 导出配置
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+  /export-config/list:
+    get:
+      summary: 获取导出配置列表
+      tags:
+        - 导出配置
+      parameters:
+        - in: query
+          name: plugin_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RExportConfigListResponse'
 
 components:
   schemas:
@@ -536,4 +628,62 @@ components:
             type: string
         protocolName:
           type: string
-
+    ExportConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 导出配置ID
+        name:
+          type: string
+          description: 推送名称
+        configuration:
+          type: object
+          additionalProperties:
+            type: string
+          description: 推送配置
+        description:
+          type: string
+          description: 描述
+        plugin_id:
+          type: integer
+          description: 插件ID
+    RExportConfig:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        success:
+          type: boolean
+          description: 请求是否成功
+        msg:
+          type: string
+          description: 响应消息
+        data:
+          $ref: '#/components/schemas/ExportConfig'
+    RExportConfigListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        success:
+          type: boolean
+          description: 请求是否成功
+        msg:
+          type: string
+          description: 响应消息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportConfig'
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 请求是否成功
+        message:
+          type: string
+          description: 响应消息

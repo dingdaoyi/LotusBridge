@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow};
 use sqlx::types::Json;
+use export_core::model::PointValue;
 use protocol_core::{Device, DeviceType};
-use crate::models::point::PointValue;
 
 #[derive(Debug, Deserialize)]
 pub struct CreatDevice {

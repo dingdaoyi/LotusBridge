@@ -7,7 +7,6 @@ pub mod middleware;
 pub mod initialize;
 use std::env;
 use std::net::SocketAddr;
-use sqlx::sqlite::{SqlitePool};
 use crate::config::auth::set_auth_config;
 use crate::config::{db, EdgeConfig};
 use crate::config::error::EdgeError;
