@@ -9,6 +9,7 @@ members = [
     "protocol/protocol-core",
     "protocol/protocol-modbus-tcp",
     "data-export/export-core",
+    "data-export/export-xiaozhiyun",
 ]
 
 [target.armv7-unknown-linux-gnueabihf]

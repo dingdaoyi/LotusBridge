@@ -1,11 +1,10 @@
-use std::sync::mpsc;
-use once_cell::sync::OnceCell;
+use std::sync::{mpsc, OnceLock};
 use protocol_core::event_bus::PointEvent;
 use protocol_core::Device;
 use protocol_core::protocol_store::ProtocolStore;
 use crate::config::error::{EdgeError, Result};
 
-static PROTOCOL_STORE: OnceCell<ProtocolStore> = OnceCell::new();
+static PROTOCOL_STORE: OnceLock<ProtocolStore> = OnceLock::new();
 
 pub fn set_protocol_store(protocol_store: ProtocolStore) -> Result<()> {
     let res = PROTOCOL_STORE.set(protocol_store);
