@@ -17,10 +17,13 @@ members = [
 
 [features]
 modbus-tcp = ["protocol-modbus-tcp"]
-default=["modbus-tcp"]
+xiaozhiyun-push = ["export-xiaozhiyun"]
+default=["modbus-tcp","xiaozhiyun-push"]
+
 [dependencies]
 protocol-core = { path = "./protocol/protocol-core" }
 export-core = { path = "data-export/export-core" }
+export-xiaozhiyun = { path = "data-export/export-xiaozhiyun",optional = true }
 protocol-modbus-tcp = { path = "./protocol/protocol-modbus-tcp", optional = true }
 axum = { version = "0.6.18", features = ["macros"] }
 rand = "0.8.5"
