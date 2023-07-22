@@ -41,7 +41,7 @@ impl DataExport for XiaozhiyunDataExport {
         Ok(())
     }
 
-    fn stop(&self, force: bool) -> Result<(), String> {
+    fn stop(&self, _force: bool) -> Result<(), String> {
         // if let Some(mut client) = self.client.lock().unwrap().take() {
         //     client.disconnect().await.map_err(|e| e.to_string())?;
         // }

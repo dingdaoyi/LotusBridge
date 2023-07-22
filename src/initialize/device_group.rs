@@ -1,5 +1,5 @@
 use std::time::Duration;
-use sqlx::{Pool, Sqlite};
+
 use crate::config::cache::get_export_store;
 use crate::config::db;
 use crate::config::error::Result;
@@ -24,9 +24,9 @@ pub(crate) async fn init_device_group() -> Result<()> {
                                 //TODO 先写死,还没有实现对于设备组跟推送的关联关系
                                  let value = map.get("xiaozhiyun-push");
                                 let export_config= value.unwrap().write();
-                              let res=  export_config.unwrap().export(device_group);
+                              let _res=  export_config.unwrap().export(device_group);
                             },
-                            Err(e)=>{  }
+                            Err(_e)=>{  }
                         };
                     // println!("定时查询数据:{:#?}",res)
 

@@ -17,7 +17,7 @@ pub(crate) async fn init_data_export() -> Result<()> {
             map
         });
     let store = get_export_store().unwrap();
-    let mut map = store.inner.write().unwrap();
+    let map = store.inner.write().unwrap();
     for (plugin_name,export_config_list) in export_config_map.iter() {
         // initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await?;
         let value = map.get(plugin_name);

@@ -1,10 +1,9 @@
 use axum::extract::{Path, Query, State};
 use axum::Json;
-use sqlx::{Connection, Executor, Sqlite, SqlitePool};
+use sqlx::{Connection, Executor, SqlitePool};
 use crate::config::error::{EdgeError, Result};
 use crate::models::plugin::{CreatePluginConfig, PluginConfig, PluginConfigQuery};
 use crate::models::R;
-use crate::utils::generate_unique_id;
 
 pub async fn create_plugin_config(
     State(pool): State<SqlitePool>,
