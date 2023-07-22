@@ -10,6 +10,7 @@ use std::net::SocketAddr;
 use crate::config::auth::set_auth_config;
 use crate::config::{db, EdgeConfig};
 use crate::config::error::EdgeError;
+use crate::initialize::data_export::init_data_export;
 use crate::initialize::device_group::init_device_group;
 use crate::initialize::protocol::init_protocol;
 
@@ -40,6 +41,12 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
    match init_device_group().await {
         Err(EdgeError::Message(msg)) => {
             panic!("初始化定时拉取数据失败{}", msg);
+        }
+        _ => {}
+    };
+    match init_data_export().await {
+        Err(EdgeError::Message(msg)) => {
+            panic!("初始化export失败{}", msg);
         }
         _ => {}
     };

@@ -8,7 +8,7 @@ use crate::model::{DeviceGroupValue, ExportConfig};
 pub trait DataExport: Any + Send + Sync {
 
     /// 初始化
-    fn initialize(&mut self, config: ExportConfig) -> Result<(), String>;
+    fn initialize(&mut self, config_list: Vec<ExportConfig>) -> Result<(), String>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), String>;

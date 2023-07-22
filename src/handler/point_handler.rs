@@ -2,12 +2,12 @@ use axum::extract::{Path, State};
 use axum::Json;
 use serde::Deserialize;
 use sqlx::SqlitePool;
-use protocol_core::{Point, PointWithProtocolId, ReadPointRequest, Value, WriterPointRequest};
+use protocol_core::{Point, PointWithProtocolId, Value, WriterPointRequest};
 use crate::config::cache::get_protocol_store;
 use crate::config::db::get_conn;
 use crate::config::device_shadow;
 use crate::config::error::{EdgeError, Result};
-use crate::models::device::{DeviceGroup, DeviceGroupValue};
+use crate::models::device::{DeviceGroup};
 use crate::models::point::{CreatePoint};
 use crate::models::R;
 
@@ -109,7 +109,7 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
 
 use futures::future::join_all;
 use tokio::task;
-use export_core::model::PointValue;
+use export_core::model::{DeviceGroupValue, PointValue};
 
 pub async fn read_point_group_value(device_group: DeviceGroup) -> Result<DeviceGroupValue> {
     let point_list = get_points_with_group_id(get_conn(), device_group.id).await?;

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow};
 use sqlx::types::Json;
-use export_core::model::PointValue;
+use export_core::model::DeviceGroupValue;
 use protocol_core::{Device, DeviceType};
 
 #[derive(Debug, Deserialize)]
@@ -59,13 +59,6 @@ pub struct CreateDeviceGroup {
 }
 
 
-#[derive(Debug, Clone)]
-pub struct DeviceGroupValue {
-    pub id: i32,
-    pub name: String,
-    pub device_id: i32,
-    pub point_values: Vec<PointValue>
-}
 
 impl From<DeviceGroup> for DeviceGroupValue{
     fn from(device_group: DeviceGroup) -> Self {

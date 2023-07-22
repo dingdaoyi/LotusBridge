@@ -27,13 +27,17 @@ impl XiaozhiyunDataExport {
 }
 
 impl DataExport for XiaozhiyunDataExport {
-    fn initialize(&mut self, config: ExportConfig) -> Result<(), String> {
-        let conf = config.configuration.0;
-        let config = conf.clone();
-        let conf: MqttConfigProperties = MqttConfigProperties::new(conf);
-        let client = client_from_config(conf).map_err(|e| e.to_string())?;
-        self.client.lock().unwrap().get_or_insert(client);
-        self.topic_prefix = config.get("topic").cloned();
+    fn initialize(&mut self, config_list: Vec<ExportConfig>) -> Result<(), String> {
+        if let Some(config) = config_list.get(0) {
+            let conf = config.clone().configuration.0;
+            let config = conf.clone();
+            let conf: MqttConfigProperties = MqttConfigProperties::new(conf);
+            let client = client_from_config(conf).map_err(|e| e.to_string())?;
+            self.client.lock().unwrap().get_or_insert(client);
+            self.topic_prefix = config.get("topic").cloned();
+        } else {
+            // config_list 是空的，没有第一个元素
+        }
         Ok(())
     }
 
@@ -68,8 +72,8 @@ fn client_from_config(config: MqttConfigProperties) -> Result<Client, paho_mqtt:
         .server_uris(&uris)
         .keep_alive_interval(Duration::from_secs(config.keep_alive as u64))
         .clean_session(true)
-        .user_name(config.username.unwrap_or("client".to_string()))
-        .password(config.password.unwrap_or("password".to_string()))
+        .user_name(config.username.unwrap_or("xiaohuoshuan".to_string()))
+        .password(config.password.unwrap_or("xiaohuoshuan".to_string()))
         .finalize();
 
     client.connect(opts)?;

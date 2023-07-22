@@ -17,16 +17,8 @@ pub fn set_protocol_store(protocol_store: ProtocolStore) -> Result<()> {
 }
 
 pub fn get_export_store() -> Option<&'static DataExportStore> {
-    EXPORT_STORE.get()
-}
-
-
-pub fn set_export_store(data_export_store: DataExportStore) -> Result<()> {
-    let res = EXPORT_STORE.set(data_export_store);
-    match res {
-        Ok(_) => Ok(()),
-        Err(_) => Err(EdgeError::Message("重复设置DataExportStore".to_string()))
-    }
+    let res = EXPORT_STORE.get_or_init(|| DataExportStore::new());
+    Some(res)
 }
 
 

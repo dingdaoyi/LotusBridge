@@ -65,6 +65,17 @@ pub async fn list_export_config(Query(ExportConfigQuery { plugin_id, .. }): Quer
 }
 
 
+/// 导出列表
+pub async fn load_all_export_config() -> Result<Vec<ExportConfig>> {
+    let query_str = "SELECT * FROM tb_export_config".to_string();
+    let pool = get_conn();
+    let export_config_list = sqlx::query_as::<_, ExportConfig>(&query_str)
+        .fetch_all(&pool)
+        .await?;
+    Ok(export_config_list)
+}
+
+
 /// 修改
 pub async fn update_export_config(State(pool): State<SqlitePool>, Path(id): Path<i32>, export_config: Json<ExportConfig>) -> Result<Json<R<String>>> {
     let updated_export_config = sqlx::query(
