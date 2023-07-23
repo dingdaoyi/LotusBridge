@@ -16,25 +16,25 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Install ARM target
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: rustup target add armv7-unknown-linux-gnueabihf && sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf
-
-      - name: Set up vcpkg on Windows
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          cd vcpkg
-          .\bootstrap-vcpkg.bat
-          .\vcpkg integrate install
-          cd ..
-
-      - name: Install OpenSSL and other dependencies using vcpkg
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          vcpkg install openssl
-          vcpkg install other_dependencies  # Add other dependencies as needed
+#
+#      - name: Install ARM target
+#        if: ${{ matrix.os == 'ubuntu-latest' }}
+#        run: rustup target add armv7-unknown-linux-gnueabihf && sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf
+#
+#      - name: Set up vcpkg on Windows
+#        if: ${{ matrix.os == 'windows-latest' }}
+#        run: |
+#          git clone https://github.com/microsoft/vcpkg.git
+#          cd vcpkg
+#          .\bootstrap-vcpkg.bat
+#          .\vcpkg integrate install
+#          cd ..
+#
+#      - name: Install OpenSSL and other dependencies using vcpkg
+#        if: ${{ matrix.os == 'windows-latest' }}
+#        run: |
+#          vcpkg install openssl
+#          vcpkg install other_dependencies  # Add other dependencies as needed
 
       - name: Build
         run: cargo build --release

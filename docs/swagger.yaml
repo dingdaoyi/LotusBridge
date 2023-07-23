@@ -454,6 +454,137 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RExportConfigListResponse'
+  /point/{id}:
+    get:
+      summary: 获取点位详情
+      tags:
+        - 点位管理
+      parameters:
+        - name: id
+          in: path
+          description: 点位id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response with the point information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Point'
+        '404':
+          description: Point not found
+
+    put:
+      summary: 修改点位
+      tags:
+        - 点位管理
+      parameters:
+        - name: id
+          in: path
+          description: ID of the point to update
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Point'
+      responses:
+        '200':
+          description: Point updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+    delete:
+      summary: 删除点位
+      tags:
+        - 点位管理
+      parameters:
+        - name: id
+          in: path
+          description: ID of the point to delete
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Point deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /point:
+    post:
+      summary: 创建点位
+      tags:
+        - 点位管理
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePoint'
+      responses:
+        '200':
+          description: Point created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /point/value/{id}:
+    get:
+      summary: 读取点位的值
+      tags:
+        - 点位管理
+      parameters:
+        - name: id
+          in: path
+          description: 点位id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response with the value of the point
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Value'
+        '404':
+          description: Point not found
+
+    post:
+      summary: 可写的点位写值
+      tags:
+        - 点位管理
+      parameters:
+        - name: id
+          in: path
+          description: 点位id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriterValue'
+      responses:
+        '200':
+          description: Value written successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
 
 components:
   schemas:
@@ -687,3 +818,66 @@ components:
         message:
           type: string
           description: 响应消息
+    Point:
+      type: object
+      properties:
+        id:
+          type: integer
+        deviceId:
+          type: integer
+        groupId:
+          type: integer
+        address:
+          type: string
+        dataType:
+          type: string
+        accessMode:
+          type: string
+        multiplier:
+          type: integer
+        precision:
+          type: integer
+        description:
+          type: string
+        partNumber:
+          type: string
+
+    CreatePoint:
+      type: object
+      properties:
+        groupId:
+          type: integer
+        address:
+          type: string
+        dataType:
+          type: string
+        accessMode:
+          type: string
+        multiplier:
+          type: integer
+        precision:
+          type: integer
+        description:
+          type: string
+        partNumber:
+          type: string
+
+    Value:
+      type: object
+      properties:
+        value:
+          type: object # Change the type based on the actual data type of the value
+
+    WriterValue:
+      type: object
+      properties:
+        value:
+          type: object # Change the type based on the actual data type of the value
+
+    Response:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
