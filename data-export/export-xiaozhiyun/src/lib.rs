@@ -58,7 +58,12 @@ impl DataExport for XiaozhiyunDataExport {
         let message: MultiMessage = device_group_value.into();
         let json = serde_json::to_vec(&message).map_err(|e| e.to_string())?;
        let msg= paho_mqtt::Message::new(topic,json,1);
-        client.clone().unwrap().publish(msg).unwrap();
+        match client.clone() {
+            None => {}
+            Some(client) => {
+                client.publish(msg).map_err(|e|e.to_string())?;
+            }
+        }
         Ok(())
     }
 }
