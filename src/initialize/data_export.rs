@@ -22,7 +22,13 @@ pub(crate) async fn init_data_export() -> Result<()> {
         // initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await?;
         let value = map.get(plugin_name);
        let export_config= value.unwrap().write();
-        export_config.unwrap().initialize(export_config_list.clone())?;
+       let res= export_config.unwrap().initialize(export_config_list.clone());
+        match res {
+            Ok(_) => {}
+            Err(msg) => {
+                tracing::error!("初始化export失败:{}|{}",plugin_name,msg);
+            }
+        }
         //初始化数据
     }
     Ok(())
