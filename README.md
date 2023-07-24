@@ -1,32 +1,32 @@
-# Yanbing-Edge [中文](README-ZH.md)
+# LotusBridge [中文](README-ZH.md)
 
 [![License](https://img.shields.io/badge/license-GPL3.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
 
-Yanbing-Edge is a Rust-based project that aims to provide a unified solution for edge computing devices. It allows you to process data on edge devices and transmit the computational results to the cloud platform. This project serves as both a learning project for Rust and a practical solution for edge computing in IoT scenarios.
+LotusBridge is a Rust-based project that aims to provide a unified solution for edge computing devices. It allows you to process data on edge devices and transmit the computational results to the cloud platform. This project serves as both a learning project for Rust and a practical solution for edge computing in IoT scenarios.
 
 ## Features
 
-- **Edge Computing**: Yanbing-Edge enables data processing and computation on edge devices, reducing frequent communication with the cloud.
+- **Edge Computing**: LotusBridge enables data processing and computation on edge devices, reducing frequent communication with the cloud.
 - **Unified Handling**: The project provides a unified way to handle different types of edge devices, shielding you from the complexity of device-specific operations.
-- **Cloud Platform Integration**: Yanbing-Edge seamlessly integrates with cloud platforms, allowing you to transmit processed data to the cloud for further analysis and storage.
+- **Cloud Platform Integration**: LotusBridge seamlessly integrates with cloud platforms, allowing you to transmit processed data to the cloud for further analysis and storage.
 - **Scalability**: The project is designed to be scalable, supporting an increasing number of edge devices and suitable for large-scale edge computing deployments.
 
 ## Getting Started
 
-To start using Yanbing-Edge, follow these steps:
+To start using LotusBridge, follow these steps:
 
 1. **Installation**: Clone the repository and build the project using Cargo, the package manager for Rust.
 
 ```bash
-git clone https://github.com/dingdaoyi/yanbing-edge.git
-cd yanbing-edge
+git clone https://github.com/dingdaoyi/LotusBridge.git
+cd LotusBridge
 cargo build
 ```
 
 2. **Configuration**: Customize the project by modifying the configuration files in the `config` directory according to your edge device and cloud platform requirements.
 
-3. **Usage**: Run the Yanbing-Edge executable to start the edge computing process.
+3. **Usage**: Run the LotusBridge executable to start the edge computing process.
 
 ```bash
 cargo run
@@ -36,11 +36,11 @@ For more detailed usage instructions and API documentation, refer to the [docume
 
 ## Contributing
 
-Contributions of all kinds are welcome and encouraged! If you're interested in contributing to Yanbing-Edge, please refer to the [contribution guidelines](CONTRIBUTING.md) to get started.
+Contributions of all kinds are welcome and encouraged! If you're interested in contributing to LotusBridge, please refer to the [contribution guidelines](CONTRIBUTING.md) to get started.
 
 ## License
 
-Yanbing-Edge is an open-source project released under the [GPL-3.0 License](LICENSE).
+LotusBridge is an open-source project released under the [GPL-3.0 License](LICENSE).
 
 ## Contact
 

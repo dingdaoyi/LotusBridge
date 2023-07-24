@@ -41,8 +41,8 @@ jobs:
 
       - name: Archive artifacts
         run: |
-          cp target/release/yanbing-edge* ./
-          tar -czvf artifacts.tar.gz ./yanbing-edge* conf sqlite.db
+          cp target/release/lotus-bridge* ./
+          tar -czvf artifacts.tar.gz ./lotus-bridge* conf sqlite.db
         # 暂时不 考虑交叉编译
         #          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
         #            cargo build --release --target=armv7-unknown-linux-gnueabihf
@@ -56,4 +56,3 @@ jobs:
           name: ${{ matrix.os }}-package
           path: |
             artifacts.tar.gz
-            artifacts-arm.tar.gz

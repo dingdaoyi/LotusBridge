@@ -1,4 +1,4 @@
-use yanbing_edge::run_app;
+use lotus_bridge::run_app;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
