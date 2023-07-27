@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: yanbing-edge
+  title: LotusBridge
   description: 接口文档,可能有问题
   version: 1.0.0
 
