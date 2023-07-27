@@ -67,6 +67,35 @@ pub struct ExportConfig {
     pub plugin_id: i32,
 }
 
+
+/// 数据导出配置
+#[derive(Debug, Deserialize, FromRow, Clone)]
+pub struct ExportConfigWithPluginName {
+    pub id: i32,
+    //推送名称
+    pub name: String,
+    // 推送配置
+    pub configuration: Json<HashMap<String, String>>,
+    // 描述
+    pub description: String,
+
+    #[serde(rename = "pluginId")]
+    pub plugin_id: i32,
+
+    pub plugin_name: String,
+}
+
+impl From<ExportConfigWithPluginName> for ExportConfig {
+    fn from(value: ExportConfigWithPluginName) -> Self {
+        Self{
+            id: value.id,
+            name: value.name,
+            configuration: value.configuration,
+            description: value.description,
+            plugin_id: value.plugin_id,
+        }
+    }
+}
 /// 数据导出配置
 #[derive(Debug, Deserialize, Clone)]
 pub struct CreateExportConfig {

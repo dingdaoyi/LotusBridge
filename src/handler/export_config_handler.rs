@@ -2,7 +2,7 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 use sqlx::SqlitePool;
-use export_core::model::{CreateExportConfig, ExportConfig};
+use export_core::model::{CreateExportConfig, ExportConfig, ExportConfigWithPluginName};
 use crate::config::db::get_conn;
 use crate::models::R;
 use crate::config::error::{EdgeError, Result};
@@ -66,10 +66,23 @@ pub async fn list_export_config(Query(ExportConfigQuery { plugin_id, .. }): Quer
 
 
 /// 导出列表
-pub async fn load_all_export_config() -> Result<Vec<ExportConfig>> {
-    let query_str = "SELECT * FROM tb_export_config".to_string();
+pub async fn load_all_export_config() -> Result<Vec<ExportConfigWithPluginName>> {
+    let query_str = r#"
+        SELECT
+            tb_export_config.id,
+            tb_export_config.name,
+            tb_export_config.configuration,
+            tb_export_config.description,
+            tb_export_config.plugin_id,
+            plugin_config.name AS plugin_name
+        FROM
+            tb_export_config
+        JOIN
+            plugin_config ON tb_export_config.plugin_id = plugin_config.id
+    "#;
+
     let pool = get_conn();
-    let export_config_list = sqlx::query_as::<_, ExportConfig>(&query_str)
+    let export_config_list = sqlx::query_as::<_, ExportConfigWithPluginName>(query_str)
         .fetch_all(&pool)
         .await?;
     Ok(export_config_list)

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use export_core::model::ExportConfig;
+use export_core::model::{ExportConfig, ExportConfigWithPluginName};
 use crate::config::cache::get_export_store;
 use crate::config::error::Result;
 use crate::handler::export_config_handler::load_all_export_config;
@@ -8,12 +8,12 @@ use crate::handler::export_config_handler::load_all_export_config;
 pub(crate) async fn init_data_export() -> Result<()> {
     register_all_export_data().await;
 
-    let export_config_list: Vec<ExportConfig> = load_all_export_config().await?;
+    let export_config_list: Vec<ExportConfigWithPluginName> = load_all_export_config().await?;
     let export_config_map: HashMap<String, Vec<ExportConfig>> = export_config_list.iter()
         .fold(HashMap::new(),|mut map, export_config|{
-            map.entry(export_config.name.clone())
-                .and_modify(|list|list.push(export_config.clone()))
-                .or_insert_with(||vec![export_config.clone()]);
+            map.entry(export_config.plugin_name.clone())
+                .and_modify(|list|list.push(export_config.clone().into()))
+                .or_insert_with(||vec![export_config.clone().into()]);
             map
         });
     let store = get_export_store().unwrap();
