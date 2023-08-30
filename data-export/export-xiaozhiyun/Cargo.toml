@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 export-core = { path = "../export-core" }
-paho-mqtt = {version = "0.12.1",default-features =false,features = ["vendored-ssl"]}
+paho-mqtt = {version = "0.12.1",default-features =false,features = ["bundled"]}
 tokio = { version = "1.28", features = ["rt-multi-thread"] }
 # 日期插件
 chrono = { version = "0.4.26", features = ["serde"] }
