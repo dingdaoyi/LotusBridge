@@ -25,7 +25,7 @@ protocol-core = { path = "./protocol/protocol-core" }
 export-core = { path = "data-export/export-core" }
 export-xiaozhiyun = { path = "data-export/export-xiaozhiyun",optional = true }
 protocol-modbus-tcp = { path = "./protocol/protocol-modbus-tcp", optional = true }
-axum = { version = "0.6.18", features = ["macros"] }
+axum = { version = "0.6.20", features = ["macros"] }
 rand = "0.8.5"
 sqlx = { version = "0.7.0-alpha.3", features = ["runtime-tokio", "sqlite", "chrono"] }
 # 解决交叉编译的问题,具体查看官方文档
