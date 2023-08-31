@@ -731,28 +731,27 @@ components:
       properties:
         id:
           type: integer
+          description: 'id'
         name:
           type: string
+          description: '设备名称'
         deviceType:
-          $ref: '#/components/schemas/DeviceType'
+          type: string
+          description: '设备类型:Gateway网关,Independent直连'
         customData:
           type: object
           additionalProperties:
             type: string
         protocolName:
           type: string
-
-    DeviceType:
-      type: string
-      enum: [type1, type2, type3]
-
     CreateDevice:
       type: object
       properties:
         name:
           type: string
         deviceType:
-          $ref: '#/components/schemas/DeviceType'
+          type: string
+          description: '设备类型:Gateway网关,Independent直连'
         customData:
           type: object
           additionalProperties:
