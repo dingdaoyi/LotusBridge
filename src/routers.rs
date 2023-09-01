@@ -1,4 +1,4 @@
-use axum::{Extension, Router};
+use axum::{Extension, Json, Router};
 use axum::middleware::{from_extractor};
 use axum::routing::{delete, get, post, put};
 use crate::handler::things::{get_product_by_id, get_product_funcs};
@@ -27,6 +27,9 @@ pub fn routers() -> Router<SqlitePool> {
     need_auth_routers().merge(no_need_auth_routers())
 }
 
+pub async fn health() -> Result<Json<String>,String> {
+    Ok(Json("success".to_string()))
+}
 //需要权限认证的路由
 pub fn need_auth_routers() -> Router<SqlitePool> {
     Router::new()
@@ -76,4 +79,5 @@ pub fn need_auth_routers() -> Router<SqlitePool> {
 pub fn no_need_auth_routers() -> Router<SqlitePool> {
     Router::new()
         .route("/login", post(login))
+        .route("/health", get(health))
 }
