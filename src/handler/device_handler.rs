@@ -4,7 +4,7 @@ use axum::Json;
 use sqlx::SqlitePool;
 use protocol_core::{Device, Point};
 use crate::config::error::{EdgeError, Result};
-use crate::models::device::{CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceGroup};
+use crate::models::device::{CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceDTOStatistics, DeviceGroup};
 use crate::models::R;
 
 pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String, Vec<Device>>> {
@@ -65,6 +65,19 @@ pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> 
 
 pub async fn list_device(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<DeviceDTO>>>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE")
+        .fetch_all(&pool)
+        .await?;
+    Ok(Json(R::success_with_data(device)))
+}
+pub async fn list_device_with_statistics(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<DeviceDTOStatistics>>>> {
+    let device = sqlx::query_as::<_, DeviceDTOStatistics>(r#"
+            SELECT
+            device.* ,
+            ( SELECT count( 1 ) FROM tb_device_group grou WHERE device.id = grou.device_id ) AS group_count,
+            ( SELECT count( 1 ) FROM tb_point point WHERE device.id = point.device_id ) AS point_count
+        FROM
+            tb_device device
+    "#)
         .fetch_all(&pool)
         .await?;
     Ok(Json(R::success_with_data(device)))

@@ -23,10 +23,27 @@ pub struct DeviceDTO {
     pub name: String,
     #[serde(rename = "deviceType")]
     pub device_type: DeviceType,
-    #[serde(rename = "customTata")]
+    #[serde(rename = "customData")]
     pub custom_data: Json<HashMap<String, String>>,
     #[serde(rename = "protocolName")]
     pub protocol_name: String,
+}
+
+#[derive(Debug, Serialize,Deserialize, FromRow)]
+pub struct DeviceDTOStatistics {
+    pub id: i32,
+    pub name: String,
+    #[serde(rename = "deviceType")]
+    pub device_type: DeviceType,
+    #[serde(rename = "customData")]
+    pub custom_data: Json<HashMap<String, String>>,
+    #[serde(rename = "protocolName")]
+    pub protocol_name: String,
+    #[serde(rename = "groupCount")]
+    pub group_count: u16,
+
+    #[serde(rename = "pointCount")]
+    pub point_count: u16,
 }
 
 impl From<DeviceDTO> for Device {
