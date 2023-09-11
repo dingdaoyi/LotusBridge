@@ -119,7 +119,7 @@ impl IntoResponse for EdgeError {
                     AuthError::WrongCredentials => (StatusCode::UNAUTHORIZED, R::fail_with_code(401,"Wrong credentials".to_string())),
                     AuthError::MissingCredentials => (StatusCode::FORBIDDEN, R::fail_with_code(403,"Missing credentials".to_string())),
                     AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, R::fail_with_code(500,"Token creation error".to_string())),
-                    AuthError::InvalidToken => (StatusCode::BAD_REQUEST, R::fail_with_code(400,"Invalid token".to_string())),
+                    AuthError::InvalidToken => (StatusCode::UNAUTHORIZED, R::fail_with_code(401,"Invalid token".to_string())),
                 }
             }
         };

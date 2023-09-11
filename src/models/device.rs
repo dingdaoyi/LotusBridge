@@ -10,7 +10,7 @@ pub struct CreatDevice {
     pub name: String,
     #[serde(rename = "deviceType")]
     pub device_type: DeviceType,
-    #[serde(rename = "customTata")]
+    #[serde(rename = "customData")]
     pub custom_data: Json<HashMap<String, String>>,
     #[serde(rename = "protocolName")]
     pub protocol_name: String,
@@ -74,8 +74,6 @@ pub struct CreateDeviceGroup {
     pub interval: i32,
     pub device_id: i32,
 }
-
-
 
 impl From<DeviceGroup> for DeviceGroupValue{
     fn from(device_group: DeviceGroup) -> Self {

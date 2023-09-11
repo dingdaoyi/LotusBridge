@@ -65,9 +65,14 @@ pub async fn list_plugin(
         sql.push_str(" AND plugin_type = ?");
     }
 
-    let plugin_configs: Vec<PluginConfig> = sqlx::query_as(&sql)
-        .bind(&name)
-        .bind(&plugin_type)
+    let mut query_as = sqlx::query_as(&sql);
+    if let Some(_) = &name {
+        query_as=query_as.bind(&name);
+    }
+    if let Some(_) = &plugin_type {
+        query_as=query_as.bind(&plugin_type);
+    }
+    let plugin_configs: Vec<PluginConfig> = query_as
         .fetch_all(&pool)
         .await?;
     Ok(Json(R::success_with_data(plugin_configs)))
