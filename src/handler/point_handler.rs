@@ -25,6 +25,13 @@ pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> R
     }
 }
 
+pub async fn exists_by_group_id(group_id:i32) -> bool {
+    return  sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM tb_point WHERE group_id = ?)")
+        .bind(group_id)
+        .fetch_one(&get_conn())
+        .await.unwrap_or(false);
+}
+
 pub async fn create_point(State(pool): State<SqlitePool>,Json(point): Json<CreatePoint>) -> Result<Json<R<Point>>> {
 
    let device_id= sqlx::query_scalar::<_, i32>("select device_id  from tb_device_group where id =?")

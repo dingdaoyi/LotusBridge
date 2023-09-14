@@ -4,6 +4,8 @@ use axum::Json;
 use sqlx::SqlitePool;
 use protocol_core::{Device, Point};
 use crate::config::error::{EdgeError, Result};
+use crate::handler::point_handler;
+
 use crate::models::device::{CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceDTOStatistics, DeviceGroup};
 use crate::models::R;
 
@@ -69,6 +71,7 @@ pub async fn list_device(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<De
         .await?;
     Ok(Json(R::success_with_data(device)))
 }
+
 pub async fn list_device_with_statistics(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<DeviceDTOStatistics>>>> {
     let device = sqlx::query_as::<_, DeviceDTOStatistics>(r#"
             SELECT
@@ -179,6 +182,10 @@ pub async fn update_device_group(State(pool): State<SqlitePool>, Path(id): Path<
 }
 
 pub async fn delete_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<String>>> {
+    let exists_point = point_handler::exists_by_group_id(id).await;
+    if exists_point {
+        return   Err(EdgeError::Message("无法删除,群组下存在点位".into()))
+    }
     let deleted_device_group = sqlx::query(
         "DELETE FROM tb_device_group WHERE id = $1",
     )
