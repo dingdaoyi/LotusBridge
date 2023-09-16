@@ -11,7 +11,7 @@ use crate::config::error::EdgeError;
 use crate::handler::auth_handler;
 use crate::handler::auth_handler::login;
 use crate::handler::export_config_handler::{create_export_config, delete_export_config, get_export_config, list_export_config, update_export_config};
-use crate::handler::point_handler::{create_point, delete_point, get_point, read_point_value, update_point, writer_point_value};
+use crate::handler::point_handler::{create_point, delete_point, get_point, point_page, read_point_value, update_point, writer_point_value};
 
 pub fn register(pool: SqlitePool) -> Result<Router, EdgeError> {
     set_protocol_store(ProtocolStore::new())?;
@@ -59,6 +59,7 @@ pub fn need_auth_routers() -> Router<SqlitePool> {
         //端点
         .route("/point/:id", get(get_point))
         .route("/point", post(create_point))
+        .route("/point/page", post(point_page))
         .route("/point/:id", put(update_point))
         .route("/point/:id", delete(delete_point))
         .route("/point/value/:id", get(read_point_value))

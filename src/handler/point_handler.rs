@@ -8,7 +8,7 @@ use crate::config::db::get_conn;
 use crate::config::device_shadow;
 use crate::config::error::{EdgeError, Result};
 use crate::models::device::{DeviceGroup};
-use crate::models::point::{CreatePoint};
+use crate::models::point::{CreatePoint, PointPageQuery};
 use crate::models::R;
 
 pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Point>> {
@@ -21,6 +21,46 @@ pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> R
         None => {
             // 没有找到匹配的行，返回自定义错误或其他逻辑
             Err(EdgeError::Message("未找到指定的数据行".into()))
+        }
+    }
+}
+
+pub async fn point_page(State(pool): State<SqlitePool>, Json(point_query): Json<PointPageQuery>) -> Result<Json<R<PaginationResponse<Point>>>> {
+    let request = point_query.page;
+    let offset = (request.page - 1) * request.limit;
+    let limit =  request.limit;
+    return match point_query.name {
+        None => {
+            let count_query = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM tb_point WHERE group_id = ? ")
+                .bind(point_query.group_id);
+            let total_count = count_query.fetch_one(&pool).await?;
+            let mut points = vec![];
+            if total_count > 0 {
+                points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE group_id = ?  LIMIT ? OFFSET ?")
+                    .bind(point_query.group_id)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&pool)
+                    .await?;
+            }
+            Ok(Json(R::success_with_data(PaginationResponse::new(points, total_count as u32))))
+        }
+        Some(name) => {
+            let count_query = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM tb_point WHERE group_id = ? AND name like '%?%'")
+                .bind(point_query.group_id)
+                .bind(&name);
+            let total_count = count_query.fetch_one(&pool).await?;
+            let mut points = vec![];
+            if total_count > 0 {
+                points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE group_id = ?  AND name like '%?%'  LIMIT ? OFFSET ? ")
+                    .bind(point_query.group_id)
+                    .bind(&name)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&pool)
+                    .await?;
+            }
+            Ok(Json(R::success_with_data(PaginationResponse::new(points, total_count as u32))))
         }
     }
 }
@@ -117,6 +157,7 @@ pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32
 use futures::future::join_all;
 use tokio::task;
 use export_core::model::{DeviceGroupValue, PointValue};
+use crate::models::page::PaginationResponse;
 
 pub async fn read_point_group_value(device_group: DeviceGroup) -> Result<DeviceGroupValue> {
     let point_list = get_points_with_group_id(get_conn(), device_group.id).await?;

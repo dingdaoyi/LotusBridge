@@ -62,9 +62,11 @@ pub enum DeviceType {
 pub struct Point {
     pub id: i32,
     // 设备id
+    #[serde(rename = "deviceId")]
     pub device_id: i32,
 
     // 设备id
+    #[serde(rename = "groupId")]
     pub group_id: i32,
 
     //地址

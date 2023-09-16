@@ -2,6 +2,7 @@ pub mod things;
 pub mod device;
 pub mod plugin;
 pub mod point;
+pub mod page;
 
 
 use serde::{Serialize, Deserialize};
