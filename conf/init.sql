@@ -54,3 +54,12 @@ CREATE TABLE tb_point
     group_id    INTEGER REFERENCES tb_device_group (id) ON DELETE CASCADE,
     UNIQUE (device_id, address)
 );
+
+CREATE TABLE tb_export_group
+(
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    export_id  INTEGER REFERENCES tb_export_config (id) ON DELETE CASCADE,
+    group_id INTEGER REFERENCES tb_device_group (id) ON DELETE CASCADE,
+    UNIQUE (group_id, export_id)
+);
+

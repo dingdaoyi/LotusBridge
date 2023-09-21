@@ -67,6 +67,23 @@ pub struct ExportConfig {
     pub plugin_id: i32,
 }
 
+/// 数据导出配置
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
+pub struct ExportConfigListVo {
+    pub id: i32,
+    //推送名称
+    pub name: String,
+    // 推送配置
+    pub configuration: Json<HashMap<String, String>>,
+    // 描述
+    pub description: String,
+
+    #[serde(rename = "groupNames")]
+    pub group_names: Option<String>,
+
+    #[serde(rename = "pluginId")]
+    pub plugin_id: i32,
+}
 
 /// 数据导出配置
 #[derive(Debug, Deserialize, FromRow, Clone)]

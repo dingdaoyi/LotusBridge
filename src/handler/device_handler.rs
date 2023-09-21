@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::Json;
+use serde::Deserialize;
 use sqlx::SqlitePool;
 use protocol_core::{Device, Point};
 use crate::config::error::{EdgeError, Result};
@@ -146,12 +147,24 @@ pub async fn get_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32
     }
 }
 
+#[derive(Deserialize)]
+pub struct DeviceGroupQuery {
+    #[serde(rename = "deviceId")]
+    device_id: Option<i32>,
+}
 
-pub async fn list_device_group(State(pool): State<SqlitePool>, Path(device_id): Path<i32>) -> Result<Json<R<Vec<DeviceGroup>>>> {
-    let device_group_list = sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group WHERE device_id = ?")
-        .bind(device_id)
-        .fetch_all(&pool)
-        .await?;
+pub async fn list_device_group(State(pool): State<SqlitePool>, Query(DeviceGroupQuery{device_id}): Query<DeviceGroupQuery>) -> Result<Json<R<Vec<DeviceGroup>>>> {
+    let query = match device_id {
+        None => {
+            sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group")
+        }
+        Some(device_id) => {
+            sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group WHERE device_id = ?")
+                .bind(device_id)
+        }
+    };
+
+    let device_group_list = query.fetch_all(&pool).await?;
     Ok(Json(R::success_with_data(device_group_list)))
 }
 

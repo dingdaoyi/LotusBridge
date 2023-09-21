@@ -3,6 +3,7 @@ pub mod device;
 pub mod plugin;
 pub mod point;
 pub mod page;
+pub  mod export_config;
 
 
 use serde::{Serialize, Deserialize};

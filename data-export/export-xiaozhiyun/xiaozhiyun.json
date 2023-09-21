@@ -1,0 +1,27 @@
+[
+  {
+    "name": "url",
+    "eltype": "input",
+    "label": "服务地址",
+    "placeholder": "输入IP地址"
+  },
+  {
+    "name": "username",
+    "eltype": "input",
+    "label": "用户名",
+    "placeholder": "请输入用户名"
+  },
+  {
+    "name": "password",
+    "eltype": "input",
+    "label": "密码",
+    "placeholder": "请输入密码"
+  },
+  {
+    "name": "keep_alive",
+    "eltype": "input",
+    "label": "保活间隔/s",
+    "defaultValue": "30",
+    "placeholder": "请输入间隔"
+  }
+]
