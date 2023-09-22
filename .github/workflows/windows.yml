@@ -17,7 +17,7 @@ jobs:
         run: vcpkg install openssl
 
       - name: Environment
-        run: cargo target add  x86_64-pc-windows-msvc
+        run: rustup target add  x86_64-pc-windows-msvc
 
       - name: Build
         run: cargo build --release --target x86_64-pc-windows-msvc
