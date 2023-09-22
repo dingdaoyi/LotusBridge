@@ -23,7 +23,8 @@ jobs:
         run: cargo build --release --target x86_64-pc-windows-msvc
       - name: Archive artifacts
         run: |
-          tar -czvf lotus-bridge.tar.gz ./lotus-bridge* conf sqlite.db ./target
+          copy .\target\x86_64-pc-windows-msvc\release\lotus-bridge.exe .\
+          tar -czvf lotus-bridge.tar.gz  conf sqlite.db lotus-bridge.exe
         if: success()
 
       - name: Upload artifacts
