@@ -11,6 +11,7 @@ pub struct DeviceGroupValue {
     pub name: String,
     pub device_id: i32,
     pub point_values: Vec<PointValue>,
+    pub export_name: Vec<String>,
 }
 
 

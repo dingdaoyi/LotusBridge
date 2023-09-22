@@ -67,6 +67,26 @@ pub struct DeviceGroup {
     pub device_id: i32,
 }
 
+#[derive(Debug, Deserialize,Serialize,FromRow, Clone)]
+pub struct DeviceGroupWithExportName {
+    pub id: i32,
+    pub name: String,
+    pub interval: i32,
+    pub device_id: i32,
+    pub export_name: Vec<String>,
+}
+
+impl From<DeviceGroup>for DeviceGroupWithExportName{
+    fn from(device_group: DeviceGroup) -> Self {
+        Self{
+            id: device_group.id,
+            name: device_group.name,
+            interval: device_group.interval,
+            device_id: device_group.device_id,
+            export_name: vec![],
+        }
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct CreateDeviceGroup {
@@ -82,9 +102,21 @@ impl From<DeviceGroup> for DeviceGroupValue{
             name: device_group.name,
             device_id: device_group.device_id,
             point_values: vec![],
+            export_name: vec![],
         }
     }
 }
 
+impl From<DeviceGroupWithExportName>for DeviceGroupValue{
+    fn from(device_group: DeviceGroupWithExportName) -> Self {
+        Self{
+            id: device_group.id,
+            name: device_group.name,
+            device_id: device_group.device_id,
+            point_values: vec![],
+            export_name: device_group.export_name,
+        }
+    }
+}
 
 

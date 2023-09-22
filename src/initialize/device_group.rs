@@ -1,3 +1,4 @@
+use std::mem::forget;
 use std::time::Duration;
 
 use crate::config::cache::get_export_store;
@@ -21,16 +22,15 @@ pub(crate) async fn init_device_group() -> Result<()> {
                            Ok(device_group)=>{
                                    let export_store= get_export_store().unwrap();
                         let map=export_store.inner.read().unwrap();
-                                //TODO 先写死,还没有实现对于设备组跟推送的关联关系
-                                 let value = map.get("xiaozhiyun-push");
-                                let export_config= value.unwrap().write();
-                              let _res=  export_config.unwrap().export(device_group);
+                                for export_name in &device_group.export_name {
+                                   let value = map.get(export_name);
+                                    let export_config= value.unwrap().write();
+                                    let _res=  export_config.unwrap().export(device_group.clone());
+                                }
                             },
                             Err(_e)=>{  }
                         };
                     // println!("定时查询数据:{:#?}",res)
-
-
             }
         }
             }

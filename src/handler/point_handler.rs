@@ -7,7 +7,7 @@ use crate::config::cache::get_protocol_store;
 use crate::config::db::get_conn;
 use crate::config::device_shadow;
 use crate::config::error::{EdgeError, Result};
-use crate::models::device::{DeviceGroup};
+use crate::models::device::{DeviceGroup, DeviceGroupWithExportName};
 use crate::models::point::{CreatePoint, PointPageQuery};
 use crate::models::R;
 
@@ -159,7 +159,7 @@ use tokio::task;
 use export_core::model::{DeviceGroupValue, PointValue};
 use crate::models::page::PaginationResponse;
 
-pub async fn read_point_group_value(device_group: DeviceGroup) -> Result<DeviceGroupValue> {
+pub async fn read_point_group_value(device_group: DeviceGroupWithExportName) -> Result<DeviceGroupValue> {
     let point_list = get_points_with_group_id(get_conn(), device_group.id).await?;
 
     // 使用异步并发并行读取每个点的值

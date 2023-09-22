@@ -7,7 +7,7 @@ use protocol_core::{Device, Point};
 use crate::config::error::{EdgeError, Result};
 use crate::handler::point_handler;
 
-use crate::models::device::{CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceDTOStatistics, DeviceGroup};
+use crate::models::device::{CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceDTOStatistics, DeviceGroup, DeviceGroupWithExportName};
 use crate::models::R;
 
 pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String, Vec<Device>>> {
@@ -169,11 +169,27 @@ pub async fn list_device_group(State(pool): State<SqlitePool>, Query(DeviceGroup
 }
 
 ///定时任务启动
-pub async fn list_all_device_group(pool: SqlitePool) -> Result<Vec<DeviceGroup>> {
+pub async fn list_all_device_group(pool: SqlitePool) -> Result<Vec<DeviceGroupWithExportName>> {
     let device_group_list = sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group")
         .fetch_all(&pool)
         .await?;
-    Ok(device_group_list)
+    let mut result: Vec<DeviceGroupWithExportName> = vec![];
+    for device_group in device_group_list {
+        let export_name =
+            sqlx::query_scalar::<_, String>(r#"
+            SELECT pc.name AS export_name
+            FROM tb_device_group dg
+            JOIN tb_export_group eg ON dg.id = eg.group_id
+            JOIN tb_export_config ec ON eg.export_id = ec.id
+            JOIN plugin_config pc ON pc.id = ec.plugin_id
+            WHERE dg.id = ?
+            "#).bind(&device_group.id)
+                .fetch_all(&pool).await?;
+        let mut device_group_with_export_name: DeviceGroupWithExportName = device_group.into();
+        device_group_with_export_name.export_name = export_name;
+        result.push(device_group_with_export_name);
+    }
+    Ok(result)
 }
 
 pub async fn update_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>, device_group: Json<DeviceGroup>) -> Result<Json<R<String>>> {
