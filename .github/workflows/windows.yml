@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup OpenSSL
+        run: vcpkg install openssl
+
+      - name: Environment
+        run: cargo target add  x86_64-pc-windows-msvc
+
+      - name: Build
+        run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Archive artifacts
+        run: |
+          cp target/release/lotus-bridge* ./
+          tar -czvf lotus-bridge.tar.gz ./lotus-bridge* conf sqlite.db
+        if: success()
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-package
+          path: |
+            lotus-bridge.tar.gz
