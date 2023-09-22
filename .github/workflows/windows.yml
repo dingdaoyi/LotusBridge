@@ -24,8 +24,8 @@ jobs:
 
       - name: Archive artifacts
         run: |
-          cp target/release/lotus-bridge* ./
-          tar -czvf lotus-bridge.tar.gz ./lotus-bridge* conf sqlite.db
+#          cp target/* ./
+          tar -czvf lotus-bridge.tar.gz ./lotus-bridge* conf sqlite.db target
         if: success()
 
       - name: Upload artifacts
