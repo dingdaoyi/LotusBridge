@@ -13,7 +13,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Environment
-        run: rustup target add  x86_64-unknown-linux-musl
+        run: |
+          rustup target add  x86_64-unknown-linux-musl
+          sudo apt update
+          sudo apt install musl-tools
 
       - name: Build
         run: cargo build --release --target x86_64-unknown-linux-musl
