@@ -19,6 +19,7 @@ pub struct EdgeConfig {
     auth: Auth,
     lib_path: String,
     server_port: u16,
+    server_ip: String,
 }
 
 impl EdgeConfig {
@@ -34,12 +35,14 @@ impl EdgeConfig {
         let auth: Auth = settings.get("auth").unwrap();
         let lib_path: String = settings.get("plugin.libPath").unwrap();
         let server_port: u16 = settings.get("server.port").unwrap();
+        let server_ip: String = settings.get("server.ip").unwrap_or("0.0.0.0".into());
         EdgeConfig {
             data_base_config: database_config,
             logger_level,
             auth,
             lib_path,
-            server_port
+            server_port,
+            server_ip
         }
     }
 }

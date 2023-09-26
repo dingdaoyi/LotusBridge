@@ -6,7 +6,8 @@ pub mod utils;
 pub mod middleware;
 pub mod initialize;
 use std::env;
-use std::net::SocketAddr;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::str::FromStr;
 use crate::config::auth::set_auth_config;
 use crate::config::{db, EdgeConfig};
 use crate::config::error::EdgeError;
@@ -51,7 +52,7 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         _ => {}
     };
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], conf.server_port().clone()));
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::from_str(conf.server_ip()).unwrap()), conf.server_port().clone());
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
