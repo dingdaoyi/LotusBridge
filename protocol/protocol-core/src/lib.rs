@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use std::error::Error;
 use std::fmt;
-use std::sync::{mpsc};
 use derive_getters::Getters;
 use crate::event_bus::PointEvent;
 
@@ -183,7 +182,7 @@ pub trait Protocol: Any + Send + Sync {
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
     fn initialize(&mut self, device_list: Vec<Device>,
-                  sender: mpsc::Sender<PointEvent>) -> Result<(), String>;
+                  sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), String>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), String>;    

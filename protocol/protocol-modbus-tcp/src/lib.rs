@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::convert::Into;
 use std::string::ToString;
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use protocol_core::{Value, Protocol, Device, ReadPointRequest, WriterPointRequest};
 use protocol_core::event_bus::PointEvent;
@@ -19,7 +19,7 @@ type ModbusClient = Transport;
 
 pub struct ModbusTcpProtocol {
     device_list: Vec<Device>,
-    sender: Option<mpsc::Sender<PointEvent>>,
+    sender: Option<tokio::sync::mpsc::Sender<PointEvent>>,
     modbus_client: HashMap<i32, Arc<Mutex<ModbusClient>>>,
 }
 
@@ -141,7 +141,7 @@ impl Protocol for ModbusTcpProtocol {
         }.map_err(|e|e.to_string())?;
         Ok(request.value)
     }
-    fn initialize(&mut self, device_list: Vec<Device>, sender: mpsc::Sender<PointEvent>) -> Result<(), String> {
+    fn initialize(&mut self, device_list: Vec<Device>, sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), String> {
         println!("协议包含数据:{:?}", device_list);
         self.sender = Some(sender);
         self.device_list = device_list;

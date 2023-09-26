@@ -7,7 +7,7 @@ use crate::handler::device_handler::load_all_device_details;
 //初始化协议
 pub(crate) async fn init_protocol(pool: Pool<Sqlite>) -> Result<()> {
     register_all_protocol().await;
-    let (sender, receiver) = std::sync::mpsc::channel();
+    let (sender, mut receiver) = tokio::sync::mpsc::channel(10);
     let device_map = load_all_device_details(pool).await;
     let device_map = match device_map {
         Ok(map) => map,
@@ -16,11 +16,19 @@ pub(crate) async fn init_protocol(pool: Pool<Sqlite>) -> Result<()> {
             panic!("启动获取设备失败")
         }
     };
-    for (protocol_name, device_list) in device_map.iter() {
-        initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await?;
-    }
     tokio::spawn(async move {
-        for point_event in receiver {
+        for (protocol_name, device_list) in device_map.iter() {
+            match initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await {
+                Ok(_) => {}
+                Err(err) => {
+                    tracing::error!("初始化协议失败:{:?}",err);
+                }
+            }
+        }
+    });
+
+    tokio::spawn(async move {
+        while let Some(point_event) = receiver.recv().await {
             handler_event(point_event).await;
         }
     });
