@@ -7,7 +7,7 @@ use crate::config::cache::get_protocol_store;
 use crate::config::db::get_conn;
 use crate::config::device_shadow;
 use crate::config::error::{EdgeError, Result};
-use crate::models::device::{DeviceGroup, DeviceGroupWithExportName};
+use crate::models::device::{DeviceGroupWithExportName};
 use crate::models::point::{CreatePoint, PointPageQuery};
 use crate::models::R;
 

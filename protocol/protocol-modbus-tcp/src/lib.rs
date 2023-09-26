@@ -6,7 +6,7 @@ use std::time::Duration;
 use protocol_core::{Value, Protocol, Device, ReadPointRequest, WriterPointRequest};
 use protocol_core::event_bus::PointEvent;
 use modbus::{Client, Coil, Config, Transport};
-use thiserror::Error;
+
 use protocol_core::protocol_store::ProtocolStore;
 
 const MODBUS_TCP_ADDRESS: &'static str = "address";
@@ -118,7 +118,7 @@ impl Protocol for ModbusTcpProtocol {
             .ok_or("modbus slave 不存在,请检查协议配置".to_string())?;
         let mut client = res.lock().unwrap();
 
-        let Address { address,function, .. } = parse_address(request.address.as_str()).unwrap_or(Address {
+        let Address { address,function, device_id: _device_id } = parse_address(request.address.as_str()).unwrap_or(Address {
             device_id: 1,
             function: 3,
             address: 0,
