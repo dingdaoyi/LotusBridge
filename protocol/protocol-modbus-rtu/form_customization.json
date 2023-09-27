@@ -1,0 +1,36 @@
+[
+  {
+    "name": "tty_path",
+    "eltype": "select",
+    "label": "串口地址",
+    "options": {
+      "label": "name",
+      "value": "name",
+      "dict_url":"/tty_path/list"
+    },
+    "placeholder": "选择串口地址"
+  },
+  {
+    "name": "port",
+    "eltype": "select",
+    "label": "波特率",
+    "options": {
+      "label": "name",
+      "value": "value",
+      "dict_value":[
+        {"name":"9600","value":"9600"},
+        {"name":"19200","value":"19200"},
+        {"name":"38400","value":"38400"},
+        {"name":"57600","value":"57600"},
+        {"name":"115200","value":"115200"}
+      ]
+    },
+    "placeholder": "波特率"
+  },
+  {
+    "name": "slaveId",
+    "eltype": "Number",
+    "label": "设备地址",
+    "placeholder": "请输入设备地址"
+  }
+]
