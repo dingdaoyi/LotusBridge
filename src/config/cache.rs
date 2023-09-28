@@ -37,7 +37,7 @@ pub async fn initialize_protocol(
     let map = store.clone().inner;
     let mut res = map.write().unwrap();
     let protocol = res.get_mut(name.as_str()).unwrap();
-    protocol.write().unwrap().initialize(device_list, sender)?;
+    protocol.write().unwrap().initialize(device_list, sender).await?;
     tracing::debug!("结束初始化协议:{:?}", name);
     Ok(())
 }

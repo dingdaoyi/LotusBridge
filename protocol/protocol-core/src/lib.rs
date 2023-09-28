@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use std::error::Error;
 use std::fmt;
+use async_trait::async_trait;
 use derive_getters::Getters;
 use crate::event_bus::PointEvent;
 
@@ -172,16 +173,17 @@ impl From<PointWithProtocolId>  for WriterPointRequest{
     }
 }
 /// Protocol trait for data processing.
+#[async_trait]
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
-    fn read_point(&self, request: ReadPointRequest) -> Result<Value, String>;
+   async fn read_point(&self, request: ReadPointRequest) -> Result<Value, String>;
 
     ///写点位,返回老点的值
-    fn write_point(&self, request: WriterPointRequest) -> Result<Value, String>;
+    async fn write_point(&self, request: WriterPointRequest) -> Result<Value, String>;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    fn initialize(&mut self, device_list: Vec<Device>,
+    async fn initialize(&mut self, device_list: Vec<Device>,
                   sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), String>;
 
     /// 停止

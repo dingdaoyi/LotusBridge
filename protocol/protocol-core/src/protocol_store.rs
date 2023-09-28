@@ -16,8 +16,17 @@ impl ProtocolStore {
     }
 
     pub fn get_protocol(&self, protocol_name: String) -> Option<Arc<RwLock<Box<dyn Protocol>>>> {
-        let map = self.inner.read().unwrap();
-        map.get(&protocol_name).cloned()
+        let result = self.inner.read();
+        match result {
+            Ok(map) => {
+                map.get(&protocol_name).cloned()
+            }
+            Err(msg) => {
+                println!("获取协议失败:{}:{}",&protocol_name,msg);
+                None
+            }
+        }
+
     }
     pub fn  new()->Self {
         Self{

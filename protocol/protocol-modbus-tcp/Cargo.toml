@@ -8,7 +8,7 @@ protocol-core = { path = "../protocol-core"  }
 tokio = { version = "1.28", features = ["full"] }
 tracing = "0.1"
 #为啥选这个库,因为测试通过的
-modbus = "1.0"
+tokio-modbus = { version = "0.8", default-features = false, features = ["tcp-sync"] }
 derive-getters = "0.3.0"
 async-trait = "0.1"
 thiserror = "1"

@@ -1,12 +1,13 @@
 use std::collections::HashMap;
-use std::convert::Into;
 use std::string::ToString;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use async_trait::async_trait;
 use protocol_core::{Value, Protocol, Device, ReadPointRequest, WriterPointRequest};
 use protocol_core::event_bus::PointEvent;
-use modbus::{Client, Coil, Config, Transport};
-
+use tokio_modbus::client::sync::Context;
+use tokio_modbus::client::sync::tcp;
+use tokio_modbus::prelude::{SyncReader, SyncWriter};
+use tokio_modbus::Slave;
 use protocol_core::protocol_store::ProtocolStore;
 
 const MODBUS_TCP_ADDRESS: &'static str = "address";
@@ -15,7 +16,7 @@ const MODBUS_TCP_PORT: &'static str = "port";
 const MODBUS_TCP_DEFAULT_PORT: u16 = 502;
 const MODBUS_TCP_DEFAULT_HOST: &'static str = "127.0.0.1";
 
-type ModbusClient = Transport;
+type ModbusClient = Context;
 
 pub struct ModbusTcpProtocol {
     device_list: Vec<Device>,
@@ -25,29 +26,19 @@ pub struct ModbusTcpProtocol {
 
 impl ModbusTcpProtocol {
 
-    fn connect_modbus_slave(&mut self, device_id: i32, address: &str, config: Config) -> Result<(), String> {
-        let client = ModbusClient::new_with_cfg(address, config)
-            .map_err(|err| err.to_string())?;
-        self.modbus_client.insert(device_id, Arc::new(Mutex::new(client)));
-        Ok(())
-    }
-    fn init_modbus(&mut self) {
-        let device_list = std::mem::take(&mut self.device_list); // 获取所有权
-        for Device { id, custom_data, .. } in device_list {
-            let mut config = modbus::tcp::Config::default();
-            let mut address = MODBUS_TCP_DEFAULT_HOST.to_string();
-            if let Some(custom_address) = custom_data.get(MODBUS_TCP_ADDRESS) {
-                address = custom_address.clone();
-            }
-            let port_str: Option<&String> = custom_data.get(MODBUS_TCP_PORT);
-            let port: Option<u16> = port_str.and_then(|s| s.parse().ok());
-            config.tcp_port = port.unwrap_or(MODBUS_TCP_DEFAULT_PORT);
-            config.tcp_connect_timeout = Some(Duration::from_secs(5));
-            if  let Err(err) = self.connect_modbus_slave(id, &address, config) {
-                println!("错误链接,请检查设备是否正常:{}", err);
-                // tokio::time::sleep(Duration::from_secs(60)).await;
-            }
+    pub(crate) fn init_modbus(&mut self) -> Result<(), String> {
+        for device in &self.device_list {
+            let custom_data = &device.custom_data;
+            let address = custom_data.get("address").map(|e|e.to_string()).unwrap_or("127.0.0.1".into());
+            let port = custom_data.get("port").map(|v| v.parse().unwrap_or(502)).unwrap_or(502);
+            let slave_id = custom_data.get("slave_id").map(|v| v.parse().unwrap_or(1)).unwrap_or(1);
+
+            let slave = Slave(slave_id);
+            let socket_addr=format!("{}:{}", address, port).parse().unwrap();
+            let ctx = tcp::connect_slave(socket_addr, slave).map_err(|e| e.to_string())?;
+            self.modbus_client.insert(device.id, Arc::new(Mutex::new(ctx)));
         }
+        Ok(())
     }
 }
 
@@ -82,8 +73,9 @@ impl std::fmt::Display for ReadPointError {
     }
 }
 
+#[async_trait]
 impl Protocol for ModbusTcpProtocol {
-    fn read_point(&self, request: ReadPointRequest) -> Result<Value, String> {
+    async fn read_point(&self, request: ReadPointRequest) -> Result<Value, String> {
         let res = self.modbus_client
             .get(&request.device_id)
             .ok_or(ReadPointError::ModbusSlaveNotFound.to_string())?;
@@ -95,24 +87,34 @@ impl Protocol for ModbusTcpProtocol {
             function: 3,
             address: 0,
         });
-        let res: modbus::Result<Vec<u16>>= match function {
-            0=>client.read_coils(address,1)
-                .map(convert_coils_to_integers),
-            1=>client.read_discrete_inputs(address,1)
-                .map(convert_coils_to_integers),
-            3 => client.read_input_registers(address, 1),
-            4=> client.read_holding_registers(address, 1),
-            _ =>return Err(ReadPointError::UnknownFunction.to_string())
-        };
-        let data = res.map_err(|err| err.to_string())?;
+        match function {
+            0 | 1 => {
+                let result = match function {
+                    0 => client.read_coils(address, 1),
+                    1 => client.read_discrete_inputs(address, 1),
+                    _ => unreachable!(), // 0 or 1
+                };
 
-        data.first()
-            .cloned()
-            .map(|value| Value::Integer(value.into()))
-            .ok_or(ReadPointError::NoDataReceived.to_string())
+                result.map(|coil| {
+                    Value::Boolean(coil.first().map(|value| *value ).unwrap_or(false))
+                }).map_err(|e| e.to_string())
+            }
+            3 | 4 => {
+                let result = match function {
+                    3 => client.read_input_registers(address, 1),
+                    4 => client.read_holding_registers(address, 1),
+                    _ => unreachable!(), // 3 or 4
+                };
+
+                result.map(|words| {
+                    Value::Integer(words.first().map(|value| *value as i32).unwrap_or(0))
+                }).map_err(|e| e.to_string())
+            }
+            _ => Err("未知类型".to_string()),
+        }
     }
 
-    fn write_point(&self, request: WriterPointRequest) -> Result<Value, String> {
+    async fn write_point(&self, request: WriterPointRequest) -> Result<Value, String> {
         let res = self.modbus_client
             .get(&request.device_id)
             .ok_or("modbus slave 不存在,请检查协议配置".to_string())?;
@@ -123,29 +125,29 @@ impl Protocol for ModbusTcpProtocol {
             function: 3,
             address: 0,
         });
-        //TODO 需要将address区分,以及不同类型的返回值转化
-      let value= match   request.value {
-           Value::Integer(va) => va as u16,
-           _ => {
-               return Err("暂未实现其他方式写入".to_string())
-           }
-       };
 
         match function {
-            0=>client.write_single_coil(address,match value {
-                0=>Coil::Off,
-                _=>Coil::On
-            }),
-            4=> client.write_single_register(address, value),
+            0=>{
+                if let Value::Boolean(value) = request.value {
+                    client.write_single_coil(address, value)
+                        .map_err(|e| e.to_string())?;
+                }
+            },
+            4=> {
+                if let Value::Integer(value) = request.value {
+                    client.write_single_register(address, value as u16)
+                        .map_err(|e| e.to_string())?;
+                }
+            },
             _ =>return Err(ReadPointError::UnknownFunction.to_string())
-        }.map_err(|e|e.to_string())?;
+        };
         Ok(request.value)
     }
-    fn initialize(&mut self, device_list: Vec<Device>, sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), String> {
+    async fn initialize(&mut self, device_list: Vec<Device>, sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), String> {
         println!("协议包含数据:{:?}", device_list);
         self.sender = Some(sender);
         self.device_list = device_list;
-       self.init_modbus();
+       self.init_modbus()?;
         Ok(())
     }
 
@@ -197,13 +199,6 @@ fn parse_address(address: &str) -> Option<Address> {
 pub async fn register_protocol(store: &ProtocolStore) {
     let protocol=ModbusTcpProtocol::default();
     store.register_protocol(PROTOCOL_NAME.to_string(),protocol);
-}
-
-fn convert_coils_to_integers(coils: Vec<Coil>) -> Vec<u16> {
-    coils.iter().map(|coil| match coil {
-        Coil::On => 1,
-        Coil::Off => 0,
-    }).collect()
 }
 
 #[cfg(test)]

@@ -150,6 +150,7 @@ pub async fn delete_point(State(pool): State<SqlitePool>, Path(point_id): Path<i
 pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<Value>>> {
     let point = get_point_with_protocol_id(pool, id).await?;
     let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
+        .await
         .map(|e| e.value)?;
     Ok(Json(R::success_with_data(res)))
 }
@@ -168,6 +169,7 @@ pub async fn read_point_group_value(device_group: DeviceGroupWithExportName) -> 
         let point_clone = point.clone();
         task::spawn(async move {
             let value = device_shadow::read_point(protocol_name, point_clone.clone().into())
+                .await
                 .map_or_else(|err| Value::String(err.to_string()), |e| e.value);
             let mut point_value: PointValue = point_clone.into();
             point_value.value = Some(value);
@@ -202,7 +204,7 @@ pub async fn writer_point_value(State(pool): State<SqlitePool>,
     let mut request: WriterPointRequest = point.into();
     request.value = value;
     let res = protocol.read().unwrap()
-        .write_point(request)?;
+        .write_point(request).await?;
     Ok(Json(R::success_with_data(res)))
 }
 

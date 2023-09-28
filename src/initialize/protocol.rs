@@ -16,17 +16,14 @@ pub(crate) async fn init_protocol(pool: Pool<Sqlite>) -> Result<()> {
             panic!("启动获取设备失败")
         }
     };
-    tokio::spawn(async move {
-        for (protocol_name, device_list) in device_map.iter() {
-            match initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await {
-                Ok(_) => {}
-                Err(err) => {
-                    tracing::error!("初始化协议失败:{:?}",err);
-                }
+    for (protocol_name, device_list) in device_map.iter() {
+        match initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await {
+            Ok(_) => {}
+            Err(err) => {
+                tracing::error!("初始化协议失败:{:?}",err);
             }
         }
-    });
-
+    }
     tokio::spawn(async move {
         while let Some(point_event) = receiver.recv().await {
             handler_event(point_event).await;
