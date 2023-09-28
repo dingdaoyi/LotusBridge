@@ -3,7 +3,7 @@ use crate::config::cache::get_protocol_store;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
-use protocol_core::{Protocol, ReadPointRequest};
+use protocol_core::ReadPointRequest;
 use crate::config::error::EdgeError;
 
 // 全局缓存数据结构

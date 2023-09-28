@@ -11,7 +11,7 @@ use crate::models::device::{DeviceGroupWithExportName};
 use crate::models::point::{CreatePoint, PointPageQuery};
 use crate::models::R;
 use futures::future::join_all;
-use futures::{FutureExt, TryFutureExt};
+use futures::TryFutureExt;
 use tokio::runtime::Runtime;
 use export_core::model::{DeviceGroupValue, PointValue};
 use crate::models::page::PaginationResponse;

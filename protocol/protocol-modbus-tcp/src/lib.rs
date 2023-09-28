@@ -12,6 +12,7 @@ use protocol_core::protocol_store::ProtocolStore;
 const MODBUS_TCP_ADDRESS: &'static str = "address";
 const PROTOCOL_NAME: &'static str = "modbus-tcp";
 const MODBUS_TCP_PORT: &'static str = "port";
+const MODBUS_SLAVE_ID: &'static str = "slave_id";
 const MODBUS_TCP_DEFAULT_PORT: u16 = 502;
 const MODBUS_TCP_DEFAULT_HOST: &'static str = "127.0.0.1";
 
@@ -28,9 +29,9 @@ impl ModbusTcpProtocol {
     pub(crate) async fn init_modbus(&mut self) -> Result<(), String> {
         for device in &self.device_list {
             let custom_data = &device.custom_data;
-            let address = custom_data.get("address").map(|e|e.to_string()).unwrap_or(MODBUS_TCP_DEFAULT_HOST.into());
-            let port = custom_data.get("port").map(|v| v.parse().unwrap_or(MODBUS_TCP_DEFAULT_PORT)).unwrap_or(MODBUS_TCP_DEFAULT_PORT);
-            let slave_id = custom_data.get("slave_id").map(|v| v.parse().unwrap_or(1)).unwrap_or(1);
+            let address = custom_data.get(MODBUS_TCP_ADDRESS).map(|e|e.to_string()).unwrap_or(MODBUS_TCP_DEFAULT_HOST.into());
+            let port = custom_data.get(MODBUS_TCP_PORT).map(|v| v.parse().unwrap_or(MODBUS_TCP_DEFAULT_PORT)).unwrap_or(MODBUS_TCP_DEFAULT_PORT);
+            let slave_id = custom_data.get(MODBUS_SLAVE_ID).map(|v| v.parse().unwrap_or(1)).unwrap_or(1);
 
             let slave = Slave(slave_id);
             let socket_addr=format!("{}:{}", address, port).parse().unwrap();
@@ -88,10 +89,10 @@ impl Protocol for ModbusTcpProtocol {
         });
         match function {
             0 | 1 => {
-                let mut  result = match function {
+                let result = match function {
                     0 => client.read_coils(address, 1),
                     1 => client.read_discrete_inputs(address, 1),
-                    _ => unreachable!(), // 0 or 1
+                    _ => unreachable!(),
                 };
 
                 result.await.map(|coil| {
@@ -102,7 +103,7 @@ impl Protocol for ModbusTcpProtocol {
                 let result = match function {
                     3 => client.read_input_registers(address, 1),
                     4 => client.read_holding_registers(address, 1),
-                    _ => unreachable!(), // 3 or 4
+                    _ => unreachable!(),
                 };
 
                 result.await.map(|words| {
