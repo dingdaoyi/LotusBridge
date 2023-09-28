@@ -1,10 +1,11 @@
 use protocol_core::event_bus::PointEvent;
 use crate::config::cache::get_protocol_store;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
 use protocol_core::{Protocol, ReadPointRequest};
 use crate::config::error::EdgeError;
+
 // 全局缓存数据结构
 lazy_static! {
     static ref EVENT_CACHE: Arc<Mutex<HashMap<i32, PointEvent>>> = Arc::new(Mutex::new(HashMap::new()));

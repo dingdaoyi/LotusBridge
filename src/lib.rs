@@ -39,19 +39,19 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         }
         _ => {}
     }
-   match init_device_group().await {
-        Err(EdgeError::Message(msg)) => {
-            panic!("初始化定时拉取数据失败{}", msg);
-        }
-        _ => {}
-    };
+
     match init_data_export().await {
         Err(EdgeError::Message(msg)) => {
             panic!("初始化export失败{}", msg);
         }
         _ => {}
     };
-
+    match init_device_group().await {
+        Err(EdgeError::Message(msg)) => {
+            panic!("初始化定时拉取数据失败{}", msg);
+        }
+        _ => {}
+    };
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::from_str(conf.server_ip()).unwrap()), conf.server_port().clone());
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)

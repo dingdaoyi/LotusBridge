@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 use std::string::ToString;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use async_trait::async_trait;
+use tokio::sync::{Mutex};
 use protocol_core::{Value, Protocol, Device, ReadPointRequest, WriterPointRequest};
 use protocol_core::event_bus::PointEvent;
-use tokio_modbus::client::sync::Context;
-use tokio_modbus::client::sync::tcp;
-use tokio_modbus::prelude::{SyncReader, SyncWriter};
+use tokio_modbus::client::{Context, Reader, Writer,tcp};
 use tokio_modbus::Slave;
 use protocol_core::protocol_store::ProtocolStore;
 
@@ -26,16 +25,16 @@ pub struct ModbusTcpProtocol {
 
 impl ModbusTcpProtocol {
 
-    pub(crate) fn init_modbus(&mut self) -> Result<(), String> {
+    pub(crate) async fn init_modbus(&mut self) -> Result<(), String> {
         for device in &self.device_list {
             let custom_data = &device.custom_data;
-            let address = custom_data.get("address").map(|e|e.to_string()).unwrap_or("127.0.0.1".into());
-            let port = custom_data.get("port").map(|v| v.parse().unwrap_or(502)).unwrap_or(502);
+            let address = custom_data.get("address").map(|e|e.to_string()).unwrap_or(MODBUS_TCP_DEFAULT_HOST.into());
+            let port = custom_data.get("port").map(|v| v.parse().unwrap_or(MODBUS_TCP_DEFAULT_PORT)).unwrap_or(MODBUS_TCP_DEFAULT_PORT);
             let slave_id = custom_data.get("slave_id").map(|v| v.parse().unwrap_or(1)).unwrap_or(1);
 
             let slave = Slave(slave_id);
             let socket_addr=format!("{}:{}", address, port).parse().unwrap();
-            let ctx = tcp::connect_slave(socket_addr, slave).map_err(|e| e.to_string())?;
+            let ctx = tcp::connect_slave(socket_addr, slave).await.map_err(|e| e.to_string())?;
             self.modbus_client.insert(device.id, Arc::new(Mutex::new(ctx)));
         }
         Ok(())
@@ -80,7 +79,7 @@ impl Protocol for ModbusTcpProtocol {
             .get(&request.device_id)
             .ok_or(ReadPointError::ModbusSlaveNotFound.to_string())?;
 
-        let mut client = res.lock().unwrap();
+        let mut client = res.lock().await;
 
         let Address { address,function, .. } = parse_address(request.address.as_str()).unwrap_or(Address {
             device_id: 1,
@@ -89,13 +88,13 @@ impl Protocol for ModbusTcpProtocol {
         });
         match function {
             0 | 1 => {
-                let result = match function {
+                let mut  result = match function {
                     0 => client.read_coils(address, 1),
                     1 => client.read_discrete_inputs(address, 1),
                     _ => unreachable!(), // 0 or 1
                 };
 
-                result.map(|coil| {
+                result.await.map(|coil| {
                     Value::Boolean(coil.first().map(|value| *value ).unwrap_or(false))
                 }).map_err(|e| e.to_string())
             }
@@ -106,7 +105,7 @@ impl Protocol for ModbusTcpProtocol {
                     _ => unreachable!(), // 3 or 4
                 };
 
-                result.map(|words| {
+                result.await.map(|words| {
                     Value::Integer(words.first().map(|value| *value as i32).unwrap_or(0))
                 }).map_err(|e| e.to_string())
             }
@@ -118,7 +117,7 @@ impl Protocol for ModbusTcpProtocol {
         let res = self.modbus_client
             .get(&request.device_id)
             .ok_or("modbus slave 不存在,请检查协议配置".to_string())?;
-        let mut client = res.lock().unwrap();
+        let mut client = res.lock().await;
 
         let Address { address,function, device_id: _device_id } = parse_address(request.address.as_str()).unwrap_or(Address {
             device_id: 1,
@@ -130,12 +129,14 @@ impl Protocol for ModbusTcpProtocol {
             0=>{
                 if let Value::Boolean(value) = request.value {
                     client.write_single_coil(address, value)
+                        .await
                         .map_err(|e| e.to_string())?;
                 }
             },
             4=> {
                 if let Value::Integer(value) = request.value {
                     client.write_single_register(address, value as u16)
+                        .await
                         .map_err(|e| e.to_string())?;
                 }
             },
@@ -147,7 +148,7 @@ impl Protocol for ModbusTcpProtocol {
         println!("协议包含数据:{:?}", device_list);
         self.sender = Some(sender);
         self.device_list = device_list;
-       self.init_modbus()?;
+       self.init_modbus().await?;
         Ok(())
     }
 

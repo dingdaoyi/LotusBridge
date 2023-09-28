@@ -31,3 +31,15 @@ pub struct PointPageQuery {
     #[serde(rename = "groupId")]
     pub group_id: i32
 }
+
+
+#[derive(Debug, Deserialize)]
+pub struct PointValue {
+    // 分页参数
+    pub page: PaginationRequest,
+    // 名称
+    pub name: Option<String>,
+
+    #[serde(rename = "groupId")]
+    pub group_id: i32
+}

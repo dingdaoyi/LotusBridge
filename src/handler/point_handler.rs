@@ -10,6 +10,12 @@ use crate::config::error::{EdgeError, Result};
 use crate::models::device::{DeviceGroupWithExportName};
 use crate::models::point::{CreatePoint, PointPageQuery};
 use crate::models::R;
+use futures::future::join_all;
+use futures::{FutureExt, TryFutureExt};
+use tokio::runtime::Runtime;
+use export_core::model::{DeviceGroupValue, PointValue};
+use crate::models::page::PaginationResponse;
+
 
 pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Point>> {
     let point = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE id = ?")
@@ -148,17 +154,14 @@ pub async fn delete_point(State(pool): State<SqlitePool>, Path(point_id): Path<i
 
 
 pub async fn read_point_value(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<Value>>> {
-    let point = get_point_with_protocol_id(pool, id).await?;
-    let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
-        .await
-        .map(|e| e.value)?;
-    Ok(Json(R::success_with_data(res)))
+    Runtime::new().unwrap().block_on(async {
+        let point = get_point_with_protocol_id(pool, id).await?;
+        let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
+            .await
+            .map(|e| e.value)?;
+        Ok(Json(R::success_with_data(res)))
+    })
 }
-
-use futures::future::join_all;
-use tokio::task;
-use export_core::model::{DeviceGroupValue, PointValue};
-use crate::models::page::PaginationResponse;
 
 pub async fn read_point_group_value(device_group: DeviceGroupWithExportName) -> Result<DeviceGroupValue> {
     let point_list = get_points_with_group_id(get_conn(), device_group.id).await?;
@@ -167,13 +170,11 @@ pub async fn read_point_group_value(device_group: DeviceGroupWithExportName) -> 
     let tasks = point_list.iter().map(|point| {
         let protocol_name = point.protocol_name.clone();
         let point_clone = point.clone();
-        task::spawn(async move {
-            let value = device_shadow::read_point(protocol_name, point_clone.clone().into())
-                .await
-                .map_or_else(|err| Value::String(err.to_string()), |e| e.value);
+        let value = device_shadow::read_point(protocol_name, point_clone.clone().into());
+        value.and_then(|e| async move{
             let mut point_value: PointValue = point_clone.into();
-            point_value.value = Some(value);
-            point_value
+            point_value.value = Some(e.value);
+            Ok(point_value)
         })
     });
      let results=join_all(tasks).await;
@@ -194,18 +195,22 @@ pub struct WriterValue{
     value:Value,
 }
 
+//TODO 这儿只有阻塞才不报错
 pub async fn writer_point_value(State(pool): State<SqlitePool>,
                                 Path(id): Path<i32>,
                                 Json(WriterValue{value, .. }): Json<WriterValue>) -> Result<Json<R<Value>>> {
-    let point = get_point_with_protocol_id(pool, id).await?;
-    let store = get_protocol_store().unwrap();
-    let protocol_map = store.inner.read().unwrap();
-    let protocol = protocol_map.get(&point.protocol_name).ok_or(EdgeError::Message("协议不存在,检查服务配置".into()))?;
-    let mut request: WriterPointRequest = point.into();
-    request.value = value;
-    let res = protocol.read().unwrap()
-        .write_point(request).await?;
-    Ok(Json(R::success_with_data(res)))
+    Runtime::new().unwrap().block_on(async {
+        let point = get_point_with_protocol_id(pool, id).await?;
+        let store = get_protocol_store().unwrap();
+        let protocol_map = store.inner.read().unwrap();
+        let protocol = protocol_map.get(&point.protocol_name).ok_or(EdgeError::Message("协议不存在,检查服务配置".into()))?;
+        let mut request: WriterPointRequest = point.into();
+        request.value = value;
+        let res = protocol.read().unwrap()
+            .write_point(request).await?;
+        Ok(Json(R::success_with_data(res)))
+    })
+
 }
 
 async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWithProtocolId> {
