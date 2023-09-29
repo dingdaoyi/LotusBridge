@@ -36,6 +36,10 @@ pub async fn register_all_protocol() {
     let store = get_protocol_store().unwrap();
     #[cfg(feature = "modbus-tcp")]
     {
-        protocol_modbus_tcp::register_protocol(store).await;
+        protocol_modbus::register_modbus_tcp(store).await;
+    }
+    #[cfg(feature = "modbus-rtu")]
+    {
+        protocol_modbus::register_modbus_rtu(store).await;
     }
 }

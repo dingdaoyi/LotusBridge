@@ -1,11 +1,13 @@
 use std::fmt::Display;
 use std::sync::PoisonError;
+use std::fmt;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
 use validator::{ValidationErrors};
+use protocol_core::ProtocolError;
 use crate::models::R;
 
 pub type Result<T> = std::result::Result<T, EdgeError>;
@@ -19,9 +21,14 @@ pub enum EdgeError {
     AuthError(AuthError),
     Message(String),
 }
-use std::fmt;
 
-// ... (之前的代码保持不变)
+impl std::error::Error for EdgeError {}
+
+impl From<ProtocolError> for EdgeError{
+    fn from(value: ProtocolError) -> Self {
+        EdgeError::Message(format!("协议解析错误:{}",&value))
+    }
+}
 
 impl Display for EdgeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

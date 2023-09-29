@@ -11,7 +11,7 @@ use derive_getters::Getters;
 use crate::event_bus::PointEvent;
 
 #[derive(Debug)]
-struct ProtocolError(String);
+pub struct ProtocolError(String);
 
 
 impl fmt::Display for ProtocolError {
@@ -22,7 +22,21 @@ impl fmt::Display for ProtocolError {
 
 impl Error for ProtocolError {}
 
-
+impl From<&str> for ProtocolError{
+    fn from(value: &str) -> Self {
+        Self(value.to_string())
+    }
+}
+impl From<String> for ProtocolError{
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+impl From<std::io::Error> for ProtocolError{
+    fn from(value: std::io::Error) -> Self {
+        Self(value.to_string())
+    }
+}
 /// 解析值
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
@@ -176,26 +190,26 @@ impl From<PointWithProtocolId>  for WriterPointRequest{
 #[async_trait]
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
-   async fn read_point(&self, request: ReadPointRequest) -> Result<Value, String>;
+   async fn read_point(&self, request: ReadPointRequest) -> Result<Value, ProtocolError>;
 
     ///写点位,返回老点的值
-    async fn write_point(&self, request: WriterPointRequest) -> Result<Value, String>;
+    async fn write_point(&self, request: WriterPointRequest) -> Result<Value, ProtocolError>;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
     async fn initialize(&mut self, device_list: Vec<Device>,
-                  sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), String>;
+                  sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), ProtocolError>;
 
     /// 停止
-    fn stop(&self, force: bool) -> Result<(), String>;    
+    fn stop(&self, force: bool) -> Result<(), ProtocolError>;
 
 
     /// 添加设备
-    fn add_device(&self, device: Device) -> Result<(), String>;
+    fn add_device(&self, device: Device) -> Result<(), ProtocolError>;
 
     /// 删除设备
-    fn remove_device(&self, device_id: i64) -> Result<(), String>;
+    fn remove_device(&self, device_id: i64) -> Result<(), ProtocolError>;
 
     /// 更新设备
-    fn update_device(&self, device: Device) -> Result<(), String>;
+    fn update_device(&self, device: Device) -> Result<(), ProtocolError>;
 }

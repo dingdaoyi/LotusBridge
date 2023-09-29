@@ -41,7 +41,7 @@ async fn read_from_protocol(protocol_name :String, request:ReadPointRequest) -> 
                 }),
                 Err(msg) => {
                     tracing::error!("读取point数据错误:{}",msg);
-                    Err(EdgeError::Message(msg))
+                    Err(EdgeError::Message(msg.to_string()))
                 }
             }
         }
