@@ -437,6 +437,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
+  /export-group:
+    post:
+      summary: 设备群组关联导出
+      operationId: associatedDeviceGroup
+      tags:
+        - 导出群组
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportGroupQuery'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RString'
+  /export-group/{export_id}:
+    get:
+      summary: 查询关联的设备群组
+      operationId: listExportGroup
+      tags:
+        - 导出群组
+      parameters:
+        - name: export_id
+          in: path
+          description: 导出ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RExportGroupList'
+
   /export-config/list:
     get:
       summary: 获取导出配置列表
@@ -880,3 +920,45 @@ components:
           type: boolean
         message:
           type: string
+    ExportGroupQuery:
+      type: object
+      properties:
+        groupIds:
+          type: array
+          items:
+            type: integer
+          description: 群组ID列表
+        exportId:
+          type: integer
+          description: 导出ID
+      required:
+        - groupIds
+        - exportId
+    ExportGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 关联ID
+        groupId:
+          type: integer
+          description: 群组ID
+        exportId:
+          type: integer
+          description: 导出ID
+    RExportGroupList:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        success:
+          type: boolean
+          description: 请求是否成功
+        msg:
+          type: string
+          description: 响应消息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportGroup'
