@@ -1,9 +1,9 @@
-use axum::extract::{Path, Query, State};
-use axum::Json;
-use sqlx::{Connection, Executor, SqlitePool};
 use crate::config::error::{EdgeError, Result};
 use crate::models::plugin::{CreatePluginConfig, PluginConfig, PluginConfigQuery};
 use crate::models::R;
+use axum::extract::{Path, Query, State};
+use axum::Json;
+use sqlx::{Connection, Executor, SqlitePool};
 
 pub async fn create_plugin_config(
     State(pool): State<SqlitePool>,
@@ -25,7 +25,6 @@ pub async fn create_plugin_config(
     transaction.commit().await?;
     Ok(Json(R::success()))
 }
-
 
 pub async fn update_plugin_config(
     State(pool): State<SqlitePool>,
@@ -50,10 +49,11 @@ pub async fn update_plugin_config(
     }
 }
 
-
 pub async fn list_plugin(
     State(pool): State<SqlitePool>,
-    Query(PluginConfigQuery { name, plugin_type, .. }): Query<PluginConfigQuery>,
+    Query(PluginConfigQuery {
+        name, plugin_type, ..
+    }): Query<PluginConfigQuery>,
 ) -> Result<Json<R<Vec<PluginConfig>>>> {
     let mut sql = format!("SELECT * FROM plugin_config WHERE 1 = 1");
 
@@ -67,28 +67,24 @@ pub async fn list_plugin(
 
     let mut query_as = sqlx::query_as(&sql);
     if let Some(_) = &name {
-        query_as=query_as.bind(&name);
+        query_as = query_as.bind(&name);
     }
     if let Some(_) = &plugin_type {
-        query_as=query_as.bind(&plugin_type);
+        query_as = query_as.bind(&plugin_type);
     }
-    let plugin_configs: Vec<PluginConfig> = query_as
-        .fetch_all(&pool)
-        .await?;
+    let plugin_configs: Vec<PluginConfig> = query_as.fetch_all(&pool).await?;
     Ok(Json(R::success_with_data(plugin_configs)))
 }
-
 
 pub async fn plugin_config_details(
     State(pool): State<SqlitePool>,
     Path(id): Path<i32>,
 ) -> Result<Json<R<PluginConfig>>> {
-    let plugin_config: Option<PluginConfig> = sqlx::query_as(
-        "select * from plugin_config where id =?",
-    )
-        .bind(id)
-        .fetch_optional(&pool)
-        .await?;
+    let plugin_config: Option<PluginConfig> =
+        sqlx::query_as("select * from plugin_config where id =?")
+            .bind(id)
+            .fetch_optional(&pool)
+            .await?;
     let plugin_config = plugin_config.ok_or(EdgeError::Message("插件不存在".to_string()))?;
     Ok(Json(R::success_with_data(plugin_config)))
 }
@@ -97,9 +93,7 @@ pub async fn delete_plugin_config(
     State(pool): State<SqlitePool>,
     Path(id): Path<i32>,
 ) -> Result<Json<R<String>>> {
-    let res = sqlx::query(
-        "delete from plugin_config where id =?",
-    )
+    let res = sqlx::query("delete from plugin_config where id =?")
         .bind(id)
         .execute(&pool)
         .await?;

@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use sqlx::{FromRow};
-use sqlx::types::Json;
 use export_core::model::DeviceGroupValue;
 use protocol_core::{Device, DeviceType};
+use serde::{Deserialize, Serialize};
+use sqlx::types::Json;
+use sqlx::FromRow;
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 pub struct CreatDevice {
@@ -16,8 +16,7 @@ pub struct CreatDevice {
     pub protocol_name: String,
 }
 
-
-#[derive(Debug, Serialize,Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct DeviceDTO {
     pub id: i32,
     pub name: String,
@@ -29,7 +28,7 @@ pub struct DeviceDTO {
     pub protocol_name: String,
 }
 
-#[derive(Debug, Serialize,Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct DeviceDTOStatistics {
     pub id: i32,
     pub name: String,
@@ -59,7 +58,7 @@ impl From<DeviceDTO> for Device {
     }
 }
 
-#[derive(Debug, Deserialize,Serialize,FromRow, Clone)]
+#[derive(Debug, Deserialize, Serialize, FromRow, Clone)]
 pub struct DeviceGroup {
     pub id: i32,
     pub name: String,
@@ -67,7 +66,7 @@ pub struct DeviceGroup {
     pub device_id: i32,
 }
 
-#[derive(Debug, Deserialize,Serialize,FromRow, Clone)]
+#[derive(Debug, Deserialize, Serialize, FromRow, Clone)]
 pub struct DeviceGroupWithExportName {
     pub id: i32,
     pub name: String,
@@ -76,9 +75,9 @@ pub struct DeviceGroupWithExportName {
     pub export_name: Vec<String>,
 }
 
-impl From<DeviceGroup>for DeviceGroupWithExportName{
+impl From<DeviceGroup> for DeviceGroupWithExportName {
     fn from(device_group: DeviceGroup) -> Self {
-        Self{
+        Self {
             id: device_group.id,
             name: device_group.name,
             interval: device_group.interval,
@@ -95,9 +94,9 @@ pub struct CreateDeviceGroup {
     pub device_id: i32,
 }
 
-impl From<DeviceGroup> for DeviceGroupValue{
+impl From<DeviceGroup> for DeviceGroupValue {
     fn from(device_group: DeviceGroup) -> Self {
-        Self{
+        Self {
             id: device_group.id,
             name: device_group.name,
             device_id: device_group.device_id,
@@ -107,9 +106,9 @@ impl From<DeviceGroup> for DeviceGroupValue{
     }
 }
 
-impl From<DeviceGroupWithExportName>for DeviceGroupValue{
+impl From<DeviceGroupWithExportName> for DeviceGroupValue {
     fn from(device_group: DeviceGroupWithExportName) -> Self {
-        Self{
+        Self {
             id: device_group.id,
             name: device_group.name,
             device_id: device_group.device_id,
@@ -118,5 +117,3 @@ impl From<DeviceGroupWithExportName>for DeviceGroupValue{
         }
     }
 }
-
-

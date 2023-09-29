@@ -1,19 +1,19 @@
 pub mod config;
 pub mod handler;
+pub mod initialize;
+pub mod middleware;
 pub mod models;
 pub mod routers;
 pub mod utils;
-pub mod middleware;
-pub mod initialize;
-use std::env;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::str::FromStr;
 use crate::config::auth::set_auth_config;
-use crate::config::{db, EdgeConfig};
 use crate::config::error::EdgeError;
+use crate::config::{db, EdgeConfig};
 use crate::initialize::data_export::init_data_export;
 use crate::initialize::device_group::init_device_group;
 use crate::initialize::protocol::init_protocol;
+use std::env;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::str::FromStr;
 
 pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     let conf = EdgeConfig::init_config();
@@ -22,15 +22,17 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     set_auth_config(conf.auth().clone());
     tracing_subscriber::fmt::init();
     let database_url = conf.data_base_config().sqlite_database_url();
-    db::init_connections(database_url).await.expect("初始化数据库错误!");
-   let pool= db::get_conn();
+    db::init_connections(database_url)
+        .await
+        .expect("初始化数据库错误!");
+    let pool = db::get_conn();
     let app = match routers::register(pool.clone()) {
         Ok(router) => router,
         Err(EdgeError::Message(msg)) => {
             // tracing::error!();
             panic!("初始化路由失败{}", msg);
         }
-        _ => panic!("初始化路由失败")
+        _ => panic!("初始化路由失败"),
     };
     //初始化协议栈
     match init_protocol(pool.clone()).await {
@@ -39,20 +41,30 @@ pub async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         }
         _ => {}
     }
-   match init_device_group().await {
-        Err(EdgeError::Message(msg)) => {
-            panic!("初始化定时拉取数据失败{}", msg);
-        }
-        _ => {}
-    };
+    tracing::debug!("初始化协议栈成功");
+
     match init_data_export().await {
         Err(EdgeError::Message(msg)) => {
             panic!("初始化export失败{}", msg);
         }
         _ => {}
     };
+    tracing::debug!("初始化export成功");
 
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::from_str(conf.server_ip()).unwrap()), conf.server_port().clone());
+    tokio::task::spawn(async move {
+        match init_device_group().await {
+            Err(EdgeError::Message(msg)) => {
+                panic!("初始化定时拉取数据失败{}", msg);
+            }
+            _ => {}
+        };
+    });
+    tracing::debug!("初始化定时拉取数据成功");
+
+    let addr = SocketAddr::new(
+        IpAddr::V4(Ipv4Addr::from_str(conf.server_ip()).unwrap()),
+        conf.server_port().clone(),
+    );
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

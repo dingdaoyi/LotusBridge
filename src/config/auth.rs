@@ -1,11 +1,13 @@
 use derive_getters::Getters;
-use serde::Deserialize;
 use once_cell::sync::OnceCell;
+use serde::Deserialize;
 
 static AUTH_CONFIG: OnceCell<Auth> = OnceCell::new();
 
 pub fn set_auth_config(auth: Auth) {
-    AUTH_CONFIG.set(auth).expect("Auth config has already been set");
+    AUTH_CONFIG
+        .set(auth)
+        .expect("Auth config has already been set");
 }
 
 pub fn get_auth_config() -> Option<&'static Auth> {

@@ -11,7 +11,7 @@ pub struct CreatePluginConfig {
     pub form_customization: Option<String>,
     // 插件类型
     #[serde(rename = "pluginType")]
-    pub plugin_type: PluginType
+    pub plugin_type: PluginType,
 }
 
 // 公共的插件配置,创建使用
@@ -21,11 +21,11 @@ pub struct PluginConfigQuery {
     pub name: Option<String>,
 
     #[serde(rename = "pluginType")]
-    pub plugin_type: Option<PluginType>
+    pub plugin_type: Option<PluginType>,
 }
 
 // 插件配置
-#[derive(Debug, Serialize,FromRow,Deserialize)]
+#[derive(Debug, Serialize, FromRow, Deserialize)]
 pub struct PluginConfig {
     pub id: i32,
     //协议名称
@@ -37,9 +37,8 @@ pub struct PluginConfig {
     pub form_customization: Option<String>,
     // 插件类型
     #[serde(rename = "pluginType")]
-    pub plugin_type: PluginType
+    pub plugin_type: PluginType,
 }
-
 
 // 插件类型
 #[derive(Debug, Serialize, Deserialize, Type, Clone)]
@@ -52,5 +51,5 @@ pub enum PluginType {
     DataOutput,
     // 规则引擎
     #[serde(rename = "RuleEngine")]
-    RuleEngine
+    RuleEngine,
 }

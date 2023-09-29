@@ -1,17 +1,31 @@
-use axum::{Extension, Json, Router};
-use axum::middleware::{from_extractor};
-use axum::routing::{delete, get, post, put};
-use crate::handler::things::{get_product_by_id, get_product_funcs};
-use sqlx::{SqlitePool};
-use protocol_core::protocol_store::ProtocolStore;
-use crate::handler::plugin_handler::{create_plugin_config, delete_plugin_config, list_plugin, plugin_config_details, update_plugin_config};
-use crate::handler::device_handler::{create_device, create_device_group, delete_device, delete_device_group, get_device, get_device_group, list_device_group, list_device_with_statistics, update_device, update_device_group};
 use crate::config::cache::{get_protocol_store, set_protocol_store};
 use crate::config::error::EdgeError;
 use crate::handler::auth_handler;
 use crate::handler::auth_handler::login;
-use crate::handler::export_config_handler::{associated_device_group, create_export_config, delete_export_config, get_export_config, list_export_config, list_export_group, update_export_config};
-use crate::handler::point_handler::{create_point, delete_point, get_point, point_page, read_point_value, update_point, writer_point_value};
+use crate::handler::device_handler::{
+    create_device, create_device_group, delete_device, delete_device_group, get_device,
+    get_device_group, list_device_group, list_device_with_statistics, update_device,
+    update_device_group,
+};
+use crate::handler::export_config_handler::{
+    associated_device_group, create_export_config, delete_export_config, get_export_config,
+    list_export_config, list_export_group, update_export_config,
+};
+use crate::handler::plugin_handler::{
+    create_plugin_config, delete_plugin_config, list_plugin, plugin_config_details,
+    update_plugin_config,
+};
+use crate::handler::point_handler::{
+    create_point, delete_point, get_point, point_page, read_point_value, update_point,
+    writer_point_value,
+};
+use crate::handler::serial_port_handler::list_serial_port;
+use crate::handler::things::{get_product_by_id, get_product_funcs};
+use axum::middleware::from_extractor;
+use axum::routing::{delete, get, post, put};
+use axum::{Extension, Json, Router};
+use protocol_core::protocol_store::ProtocolStore;
+use sqlx::SqlitePool;
 
 pub fn register(pool: SqlitePool) -> Result<Router, EdgeError> {
     set_protocol_store(ProtocolStore::new())?;
@@ -21,13 +35,12 @@ pub fn register(pool: SqlitePool) -> Result<Router, EdgeError> {
         .layer(Extension(get_protocol_store().unwrap())))
 }
 
-
 //api
 pub fn routers() -> Router<SqlitePool> {
     need_auth_routers().merge(no_need_auth_routers())
 }
 
-pub async fn health() -> Result<Json<String>,String> {
+pub async fn health() -> Result<Json<String>, String> {
     Ok(Json("success".to_string()))
 }
 //需要权限认证的路由
@@ -36,25 +49,31 @@ pub fn need_auth_routers() -> Router<SqlitePool> {
         .route("/things", get(get_product_funcs))
         .route("/things/:id", get(get_product_by_id))
         // 设备
-        .route("/device/:id", get(get_device)
-            .put(update_device).delete(delete_device))
-        .route("/device", post(create_device)
-            .get(list_device_with_statistics))
+        .route(
+            "/device/:id",
+            get(get_device).put(update_device).delete(delete_device),
+        )
+        .route(
+            "/device",
+            post(create_device).get(list_device_with_statistics),
+        )
         //创建设备组
         .route("/device-group", post(create_device_group))
         .route("/device-group/list", get(list_device_group))
-        .route("/device-group/:id",
-               put(update_device_group)
-                   .get(get_device_group)
-                   .delete(delete_device_group),
+        .route(
+            "/device-group/:id",
+            put(update_device_group)
+                .get(get_device_group)
+                .delete(delete_device_group),
         )
         // 创建导出配置
         .route("/export-config", post(create_export_config))
         .route("/export-config/list", get(list_export_config))
-        .route("/export-config/:id",
-               put(update_export_config)
-                   .get(get_export_config)
-                   .delete(delete_export_config),
+        .route(
+            "/export-config/:id",
+            put(update_export_config)
+                .get(get_export_config)
+                .delete(delete_export_config),
         )
         .route("/export-group", post(associated_device_group))
         .route("/export-group/:export_id", get(list_export_group))
@@ -69,12 +88,12 @@ pub fn need_auth_routers() -> Router<SqlitePool> {
         //创建插件
         .route("/plugin", post(create_plugin_config))
         .route("/plugin/list", get(list_plugin))
-        .route("/plugin/:id",
-               put(update_plugin_config)
-                   .get(plugin_config_details)
-                   .delete(delete_plugin_config),
+        .route(
+            "/plugin/:id",
+            put(update_plugin_config)
+                .get(plugin_config_details)
+                .delete(delete_plugin_config),
         )
-
         .layer(from_extractor::<auth_handler::Claims>())
 }
 
@@ -83,4 +102,5 @@ pub fn no_need_auth_routers() -> Router<SqlitePool> {
     Router::new()
         .route("/login", post(login))
         .route("/health", get(health))
+        .route("/tty_path/list", get(list_serial_port))
 }

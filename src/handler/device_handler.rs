@@ -1,13 +1,16 @@
-use std::collections::HashMap;
-use axum::extract::{Path, Query, State};
-use axum::Json;
-use serde::Deserialize;
-use sqlx::SqlitePool;
-use protocol_core::{Device, Point};
 use crate::config::error::{EdgeError, Result};
 use crate::handler::point_handler;
+use axum::extract::{Path, Query, State};
+use axum::Json;
+use protocol_core::{Device, Point};
+use serde::Deserialize;
+use sqlx::SqlitePool;
+use std::collections::HashMap;
 
-use crate::models::device::{CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceDTOStatistics, DeviceGroup, DeviceGroupWithExportName};
+use crate::models::device::{
+    CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceDTOStatistics, DeviceGroup,
+    DeviceGroupWithExportName,
+};
 use crate::models::R;
 
 pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String, Vec<Device>>> {
@@ -33,11 +36,14 @@ pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String,
             .or_insert_with(Vec::new)
             .push(device_with_points);
     }
-    tracing::info!("加载协议总数:{}",res.len());
+    tracing::info!("加载协议总数:{}", res.len());
     Ok(res)
 }
 
-pub async fn create_device(State(pool): State<SqlitePool>, device: Json<CreatDevice>) -> Result<Json<R<DeviceDTO>>> {
+pub async fn create_device(
+    State(pool): State<SqlitePool>,
+    device: Json<CreatDevice>,
+) -> Result<Json<R<DeviceDTO>>> {
     let created_device = sqlx::query_as::<_, DeviceDTO>(
         "INSERT INTO tb_device (name, device_type, custom_data, protocol_name) VALUES (?, ?, ?, ?) RETURNING *",
     )
@@ -51,7 +57,10 @@ pub async fn create_device(State(pool): State<SqlitePool>, device: Json<CreatDev
     Ok(Json(R::success_with_data(created_device)))
 }
 
-pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<DeviceDTO>>> {
+pub async fn get_device(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i32>,
+) -> Result<Json<R<DeviceDTO>>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE id = ?")
         .bind(id)
         .fetch_optional(&pool)
@@ -65,7 +74,6 @@ pub async fn get_device(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> 
     }
 }
 
-
 pub async fn list_device(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<DeviceDTO>>>> {
     let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device WHERE")
         .fetch_all(&pool)
@@ -73,7 +81,9 @@ pub async fn list_device(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<De
     Ok(Json(R::success_with_data(device)))
 }
 
-pub async fn list_device_with_statistics(State(pool): State<SqlitePool>) -> Result<Json<R<Vec<DeviceDTOStatistics>>>> {
+pub async fn list_device_with_statistics(
+    State(pool): State<SqlitePool>,
+) -> Result<Json<R<Vec<DeviceDTOStatistics>>>> {
     let device = sqlx::query_as::<_, DeviceDTOStatistics>(r#"
             SELECT
             device.* ,
@@ -113,7 +123,10 @@ pub async fn update_device(
     }
 }
 
-pub async fn delete_device(State(pool): State<SqlitePool>, Path(device_id): Path<i32>) -> Result<Json<R<String>>> {
+pub async fn delete_device(
+    State(pool): State<SqlitePool>,
+    Path(device_id): Path<i32>,
+) -> Result<Json<R<String>>> {
     sqlx::query("DELETE FROM tb_device WHERE id = ?")
         .bind(device_id)
         .execute(&pool)
@@ -122,24 +135,32 @@ pub async fn delete_device(State(pool): State<SqlitePool>, Path(device_id): Path
     Ok(Json(R::success()))
 }
 
-pub async fn create_device_group(State(pool): State<SqlitePool>, device_group: Json<CreateDeviceGroup>) -> Result<Json<R<DeviceGroup>>> {
+pub async fn create_device_group(
+    State(pool): State<SqlitePool>,
+    device_group: Json<CreateDeviceGroup>,
+) -> Result<Json<R<DeviceGroup>>> {
     let created_device_group = sqlx::query_as::<_, DeviceGroup>(
         "INSERT INTO tb_device_group (name, interval, device_id) VALUES (?, ?, ?) RETURNING *",
     )
-        .bind(&device_group.name)
-        .bind(device_group.interval)
-        .bind(device_group.device_id)
-        .fetch_one(&pool)
-        .await.map_err(|_|EdgeError::Message("设备id不存在".into()))?;
+    .bind(&device_group.name)
+    .bind(device_group.interval)
+    .bind(device_group.device_id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|_| EdgeError::Message("设备id不存在".into()))?;
 
     Ok(Json(R::success_with_data(created_device_group)))
 }
 
-pub async fn get_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<DeviceGroup>>> {
-    let device_group = sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group WHERE id = ?")
-        .bind(id)
-        .fetch_optional(&pool)
-        .await?;
+pub async fn get_device_group(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i32>,
+) -> Result<Json<R<DeviceGroup>>> {
+    let device_group =
+        sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&pool)
+            .await?;
 
     match device_group {
         Some(device_group) => Ok(Json(R::success_with_data(device_group))),
@@ -153,11 +174,12 @@ pub struct DeviceGroupQuery {
     device_id: Option<i32>,
 }
 
-pub async fn list_device_group(State(pool): State<SqlitePool>, Query(DeviceGroupQuery{device_id}): Query<DeviceGroupQuery>) -> Result<Json<R<Vec<DeviceGroup>>>> {
+pub async fn list_device_group(
+    State(pool): State<SqlitePool>,
+    Query(DeviceGroupQuery { device_id }): Query<DeviceGroupQuery>,
+) -> Result<Json<R<Vec<DeviceGroup>>>> {
     let query = match device_id {
-        None => {
-            sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group")
-        }
+        None => sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group"),
         Some(device_id) => {
             sqlx::query_as::<_, DeviceGroup>("SELECT * FROM tb_device_group WHERE device_id = ?")
                 .bind(device_id)
@@ -175,16 +197,19 @@ pub async fn list_all_device_group(pool: SqlitePool) -> Result<Vec<DeviceGroupWi
         .await?;
     let mut result: Vec<DeviceGroupWithExportName> = vec![];
     for device_group in device_group_list {
-        let export_name =
-            sqlx::query_scalar::<_, String>(r#"
+        let export_name = sqlx::query_scalar::<_, String>(
+            r#"
             SELECT pc.name AS export_name
             FROM tb_device_group dg
             JOIN tb_export_group eg ON dg.id = eg.group_id
             JOIN tb_export_config ec ON eg.export_id = ec.id
             JOIN plugin_config pc ON pc.id = ec.plugin_id
             WHERE dg.id = ?
-            "#).bind(&device_group.id)
-                .fetch_all(&pool).await?;
+            "#,
+        )
+        .bind(&device_group.id)
+        .fetch_all(&pool)
+        .await?;
         let mut device_group_with_export_name: DeviceGroupWithExportName = device_group.into();
         device_group_with_export_name.export_name = export_name;
         result.push(device_group_with_export_name);
@@ -192,16 +217,20 @@ pub async fn list_all_device_group(pool: SqlitePool) -> Result<Vec<DeviceGroupWi
     Ok(result)
 }
 
-pub async fn update_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>, device_group: Json<DeviceGroup>) -> Result<Json<R<String>>> {
+pub async fn update_device_group(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i32>,
+    device_group: Json<DeviceGroup>,
+) -> Result<Json<R<String>>> {
     let updated_device_group = sqlx::query(
         "UPDATE tb_device_group SET name = $1, interval = $2, device_id = $3 WHERE id = $4",
     )
-        .bind(&device_group.name)
-        .bind(device_group.interval)
-        .bind(device_group.device_id)
-        .bind(id)
-        .execute(&pool)
-        .await?;
+    .bind(&device_group.name)
+    .bind(device_group.interval)
+    .bind(device_group.device_id)
+    .bind(id)
+    .execute(&pool)
+    .await?;
 
     if updated_device_group.rows_affected() > 0 {
         Ok(Json(R::success()))
@@ -210,14 +239,15 @@ pub async fn update_device_group(State(pool): State<SqlitePool>, Path(id): Path<
     }
 }
 
-pub async fn delete_device_group(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<R<String>>> {
+pub async fn delete_device_group(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i32>,
+) -> Result<Json<R<String>>> {
     let exists_point = point_handler::exists_by_group_id(id).await;
     if exists_point {
-        return   Err(EdgeError::Message("无法删除,群组下存在点位".into()))
+        return Err(EdgeError::Message("无法删除,群组下存在点位".into()));
     }
-    let deleted_device_group = sqlx::query(
-        "DELETE FROM tb_device_group WHERE id = $1",
-    )
+    let deleted_device_group = sqlx::query("DELETE FROM tb_device_group WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await?;

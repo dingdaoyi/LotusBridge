@@ -1,9 +1,9 @@
+use crate::config::date_format;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
-use sqlx::{FromRow};
+use sqlx::FromRow;
 use std::collections::HashMap;
-use crate::config::date_format;
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub struct ProductFunc {
@@ -13,7 +13,7 @@ pub struct ProductFunc {
     #[serde(rename = "createTime", with = "date_format")]
     pub create_time: Option<NaiveDateTime>,
 
-    #[serde(rename = "updateTime",with = "date_format")]
+    #[serde(rename = "updateTime", with = "date_format")]
     pub update_time: Option<NaiveDateTime>,
 
     #[serde(rename = "async")]

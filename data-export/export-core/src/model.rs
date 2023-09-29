@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
-use sqlx::types::Json;
 use protocol_core::{Point, PointWithProtocolId, Value};
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
+use serde::{Deserialize, Serialize};
+use sqlx::types::Json;
+use sqlx::FromRow;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct DeviceGroupValue {
@@ -13,7 +13,6 @@ pub struct DeviceGroupValue {
     pub point_values: Vec<PointValue>,
     pub export_name: Vec<String>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct PointValue {
@@ -105,7 +104,7 @@ pub struct ExportConfigWithPluginName {
 
 impl From<ExportConfigWithPluginName> for ExportConfig {
     fn from(value: ExportConfigWithPluginName) -> Self {
-        Self{
+        Self {
             id: value.id,
             name: value.name,
             configuration: value.configuration,
@@ -127,11 +126,10 @@ pub struct CreateExportConfig {
     pub plugin_id: i32,
 }
 
-
-#[derive(Clone, Debug,Serialize,Deserialize,PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MqttConfigProperties {
     /// 用户名
-   pub username: Option<String>,
+    pub username: Option<String>,
 
     ///密码
     pub password: Option<String>,
@@ -153,8 +151,14 @@ impl MqttConfigProperties {
     pub fn new(configuration: HashMap<String, String>) -> Self {
         let username: Option<String> = configuration.get("username").cloned();
         let password = configuration.get("password").cloned();
-        let url = configuration.get("url").cloned().unwrap_or("tcp://mqtt.diweiyunlian.cn:2840".to_string());
-        let client_id = configuration.get("client_id").cloned().unwrap_or(generate_client_id(8));
+        let url = configuration
+            .get("url")
+            .cloned()
+            .unwrap_or("tcp://mqtt.diweiyunlian.cn:2840".to_string());
+        let client_id = configuration
+            .get("client_id")
+            .cloned()
+            .unwrap_or(generate_client_id(8));
         let keep_alive: u16 = configuration
             .get("keep_alive")
             .and_then(|s| s.parse::<u16>().ok())
@@ -203,9 +207,8 @@ fn test_deserialize_from_json() {
         "auto_connect": "true"
     }"#;
 
-    let config:HashMap<String,String> =
-        serde_json::from_str(json_data).unwrap();
-   let mqtt_config= MqttConfigProperties::new(config);
+    let config: HashMap<String, String> = serde_json::from_str(json_data).unwrap();
+    let mqtt_config = MqttConfigProperties::new(config);
     let expected_mqtt_config = MqttConfigProperties {
         username: Some("john_doe".to_string()),
         password: Some("secret_password".to_string()),
