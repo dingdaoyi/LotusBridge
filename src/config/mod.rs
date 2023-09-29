@@ -1,16 +1,16 @@
+use crate::config::auth::Auth;
 use crate::config::database::DatabaseConfig;
 use config::{Config, File, FileFormat};
 use derive_getters::Getters;
-use crate::config::auth::Auth;
 
 mod database;
 // 自定义日期解析
-pub mod date_format;
-pub mod error;
-pub mod cache;
 pub mod auth;
-pub mod device_shadow;
+pub mod cache;
+pub mod date_format;
 pub mod db;
+pub mod device_shadow;
+pub mod error;
 
 #[derive(Getters)]
 pub struct EdgeConfig {
@@ -42,7 +42,7 @@ impl EdgeConfig {
             auth,
             lib_path,
             server_port,
-            server_ip
+            server_ip,
         }
     }
 }

@@ -1,9 +1,9 @@
+use crate::models::page::PaginationRequest;
+use protocol_core::{AccessMode, DataType};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use protocol_core::{AccessMode, DataType};
-use crate::models::page::PaginationRequest;
 
-#[derive(Debug, Serialize, Deserialize,FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct CreatePoint {
     // 设备设备组id
     #[serde(rename = "groupId")]
@@ -29,9 +29,8 @@ pub struct PointPageQuery {
     pub name: Option<String>,
 
     #[serde(rename = "groupId")]
-    pub group_id: i32
+    pub group_id: i32,
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct PointValue {
@@ -41,5 +40,5 @@ pub struct PointValue {
     pub name: Option<String>,
 
     #[serde(rename = "groupId")]
-    pub group_id: i32
+    pub group_id: i32,
 }

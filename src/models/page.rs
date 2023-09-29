@@ -9,11 +9,11 @@ pub struct PaginationRequest {
 }
 
 fn default_page() -> u32 {
-    1 
+    1
 }
 
 fn default_limit() -> u32 {
-    10 
+    10
 }
 
 #[derive(Debug, Serialize)]
@@ -22,12 +22,8 @@ pub struct PaginationResponse<T> {
     pub data: Vec<T>,
 }
 
-impl <T>PaginationResponse<T> {
-    
-    pub fn new(data:Vec<T>,total:u32) -> Self {
-         Self{
-             total,
-             data,
-         }
+impl<T> PaginationResponse<T> {
+    pub fn new(data: Vec<T>, total: u32) -> Self {
+        Self { total, data }
     }
 }

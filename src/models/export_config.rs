@@ -9,7 +9,7 @@ pub struct ExportGroupQuery {
     pub export_id: i32,
 }
 
-#[derive(Deserialize, Debug,Serialize,FromRow)]
+#[derive(Deserialize, Debug, Serialize, FromRow)]
 pub struct ExportGroup {
     pub id: i32,
     #[serde(rename = "groupId")]

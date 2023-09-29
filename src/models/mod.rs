@@ -1,12 +1,11 @@
-pub mod things;
 pub mod device;
+pub mod export_config;
+pub mod page;
 pub mod plugin;
 pub mod point;
-pub mod page;
-pub  mod export_config;
+pub mod things;
 
-
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::option::Option;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -19,7 +18,12 @@ pub struct R<T> {
 
 impl<T> R<T> {
     pub fn new(code: i32, success: bool, msg: String, data: Option<T>) -> Self {
-        R { code, success, msg, data }
+        R {
+            code,
+            success,
+            msg,
+            data,
+        }
     }
 
     pub fn success() -> Self {

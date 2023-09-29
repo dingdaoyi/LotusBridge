@@ -1,18 +1,17 @@
 pub mod event_bus;
 pub mod protocol_store;
-use std::any::Any;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Type};
-use std::error::Error;
-use std::fmt;
+use crate::event_bus::PointEvent;
 use async_trait::async_trait;
 use derive_getters::Getters;
-use crate::event_bus::PointEvent;
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, Type};
+use std::any::Any;
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct ProtocolError(String);
-
 
 impl fmt::Display for ProtocolError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -22,17 +21,17 @@ impl fmt::Display for ProtocolError {
 
 impl Error for ProtocolError {}
 
-impl From<&str> for ProtocolError{
+impl From<&str> for ProtocolError {
     fn from(value: &str) -> Self {
         Self(value.to_string())
     }
 }
-impl From<String> for ProtocolError{
+impl From<String> for ProtocolError {
     fn from(value: String) -> Self {
         Self(value)
     }
 }
-impl From<std::io::Error> for ProtocolError{
+impl From<std::io::Error> for ProtocolError {
     fn from(value: std::io::Error) -> Self {
         Self(value.to_string())
     }
@@ -96,7 +95,7 @@ pub struct Point {
     pub part_number: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow,Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct PointWithProtocolId {
     pub point_id: i32,
     pub device_id: i32,
@@ -144,12 +143,11 @@ pub struct ReadPointRequest {
     pub access_mode: AccessMode,
     pub multiplier: f64,
     pub precision: u32,
-
 }
 
-impl From<PointWithProtocolId>  for ReadPointRequest{
+impl From<PointWithProtocolId> for ReadPointRequest {
     fn from(value: PointWithProtocolId) -> Self {
-        Self{
+        Self {
             device_id: value.device_id,
             point_id: value.point_id,
             address: value.address,
@@ -172,9 +170,9 @@ pub struct WriterPointRequest {
     pub precision: u32,
 }
 
-impl From<PointWithProtocolId>  for WriterPointRequest{
+impl From<PointWithProtocolId> for WriterPointRequest {
     fn from(value: PointWithProtocolId) -> Self {
-        Self{
+        Self {
             device_id: value.device_id,
             point_id: value.point_id,
             value: Value::Boolean(false),
@@ -190,19 +188,21 @@ impl From<PointWithProtocolId>  for WriterPointRequest{
 #[async_trait]
 pub trait Protocol: Any + Send + Sync {
     ///读取点位数据
-   async fn read_point(&self, request: ReadPointRequest) -> Result<Value, ProtocolError>;
+    async fn read_point(&self, request: ReadPointRequest) -> Result<Value, ProtocolError>;
 
     ///写点位,返回老点的值
     async fn write_point(&self, request: WriterPointRequest) -> Result<Value, ProtocolError>;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
-    async fn initialize(&mut self, device_list: Vec<Device>,
-                  sender: tokio::sync::mpsc::Sender<PointEvent>) -> Result<(), ProtocolError>;
+    async fn initialize(
+        &mut self,
+        device_list: Vec<Device>,
+        sender: tokio::sync::mpsc::Sender<PointEvent>,
+    ) -> Result<(), ProtocolError>;
 
     /// 停止
     fn stop(&self, force: bool) -> Result<(), ProtocolError>;
-
 
     /// 添加设备
     fn add_device(&self, device: Device) -> Result<(), ProtocolError>;

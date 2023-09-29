@@ -28,7 +28,7 @@
     "placeholder": "波特率"
   },
   {
-    "name": "slaveId",
+    "name": "slave_id",
     "eltype": "Number",
     "label": "设备地址",
     "placeholder": "请输入设备地址"

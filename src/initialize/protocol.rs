@@ -1,8 +1,8 @@
-use sqlx::{Pool, Sqlite};
-use crate::config::error::Result;
 use crate::config::cache::{get_protocol_store, initialize_protocol};
 use crate::config::device_shadow::handler_event;
+use crate::config::error::Result;
 use crate::handler::device_handler::load_all_device_details;
+use sqlx::{Pool, Sqlite};
 
 //初始化协议
 pub(crate) async fn init_protocol(pool: Pool<Sqlite>) -> Result<()> {
@@ -12,15 +12,16 @@ pub(crate) async fn init_protocol(pool: Pool<Sqlite>) -> Result<()> {
     let device_map = match device_map {
         Ok(map) => map,
         Err(err) => {
-            tracing::error!("启动获取设备失败:{:?}",err);
+            tracing::error!("启动获取设备失败:{:?}", err);
             panic!("启动获取设备失败")
         }
     };
     for (protocol_name, device_list) in device_map.iter() {
-        match initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await {
+        match initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await
+        {
             Ok(_) => {}
             Err(err) => {
-                tracing::error!("初始化协议失败:{:?}",err);
+                tracing::error!("初始化协议失败:{:?}", err);
             }
         }
     }
