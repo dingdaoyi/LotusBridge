@@ -19,7 +19,7 @@ members = [
 modbus-tcp = ["protocol-modbus/modbus-tcp"]
 modbus-rtu = ["protocol-modbus/modbus-rtu"]
 xiaozhiyun-push = ["export-xiaozhiyun"]
-default=["modbus-tcp","xiaozhiyun-push"]
+default=["modbus-tcp","xiaozhiyun-push","modbus-rtu"]
 
 [dependencies]
 protocol-core = { path = "./protocol/protocol-core" }
