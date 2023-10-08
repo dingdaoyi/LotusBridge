@@ -2,9 +2,8 @@ use crate::config::error::{EdgeError, Result};
 use export_core::export_store::DataExportStore;
 use protocol_core::event_bus::PointEvent;
 use protocol_core::protocol_store::ProtocolStore;
-use protocol_core::{Device, Protocol, ProtocolError};
-use std::sync::{Arc, OnceLock};
-use tokio::sync::Mutex;
+use protocol_core::Device;
+use std::sync::OnceLock;
 
 static PROTOCOL_STORE: OnceLock<ProtocolStore> = OnceLock::new();
 static EXPORT_STORE: OnceLock<DataExportStore> = OnceLock::new();
@@ -33,7 +32,7 @@ pub async fn initialize_protocol(
 ) -> Result<()> {
     tracing::debug!("开始初始化协议设备:{:?}", name);
     let store = get_protocol_store().unwrap();
-    let mut map = store.clone().inner;
+    let map = store.clone().inner;
     let protocol = map.lock().await.get_mut(name.as_str()).cloned();
     match protocol {
         None => Err(EdgeError::Message(format!("协议:{}不存在", &name))),

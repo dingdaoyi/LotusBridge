@@ -14,7 +14,7 @@ use futures::TryFutureExt;
 use protocol_core::{Point, PointWithProtocolId, Value, WriterPointRequest};
 use serde::Deserialize;
 use sqlx::SqlitePool;
-use tokio::runtime::Runtime;
+
 use crate::handler::device_handler::list_all_device_group;
 
 pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Point>> {

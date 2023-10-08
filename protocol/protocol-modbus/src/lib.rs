@@ -4,10 +4,8 @@ use protocol_core::event_bus::PointEvent;
 use protocol_core::protocol_store::ProtocolStore;
 use protocol_core::{Device, Protocol, ProtocolError, ReadPointRequest, Value, WriterPointRequest};
 use std::collections::HashMap;
-use std::io::Error;
 use std::string::ToString;
 use std::sync::Arc;
-use tokio::runtime::Runtime;
 use tokio::sync::{Mutex, RwLock};
 use tokio_modbus::client::{rtu, tcp, Context, Reader, Writer};
 use tokio_modbus::Slave;
@@ -47,7 +45,7 @@ impl ModbusTcpProtocol {
 
     #[cfg(feature = "modbus-tcp")]
     async fn init_tcp_modbus(&mut self) {
-        let mut device_list = Arc::clone(&self.device_list);
+        let device_list = Arc::clone(&self.device_list);
         let map = Arc::clone(&self.modbus_client);
         tokio::spawn(async move {
             for device in device_list.iter() {
@@ -101,7 +99,7 @@ impl ModbusTcpProtocol {
                 .unwrap_or(19200);
             let slave = Slave(slave_id);
 
-            let builder = tokio_serial::new(&tty_path, 19200);
+            let builder = tokio_serial::new(&tty_path, port);
             match SerialStream::open(&builder) {
                 Ok(port) => {
                     let ctx = rtu::attach_slave(port, slave);

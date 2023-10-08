@@ -23,7 +23,7 @@ pub(crate) async fn init_data_export() -> Result<()> {
     for (plugin_name, export_config_list) in export_config_map.iter() {
         // initialize_protocol(protocol_name.clone(), sender.clone(), device_list.to_vec()).await?;
         let value = map.get(plugin_name);
-        let mut export_config = value.unwrap().write();
+        let export_config = value.unwrap().write();
         let res = export_config.await.initialize(export_config_list.clone());
         match res {
             Ok(_) => {}
