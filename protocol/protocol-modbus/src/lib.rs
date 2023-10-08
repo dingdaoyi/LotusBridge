@@ -154,7 +154,6 @@ impl Protocol for ModbusTcpProtocol {
             .ok_or(ReadPointError::ModbusSlaveNotFound.to_string())?;
 
         let mut client = res.lock().await;
-
         let Address {
             address, function, ..
         } = parse_address(request.address.as_str()).unwrap_or(Address {
@@ -177,8 +176,8 @@ impl Protocol for ModbusTcpProtocol {
             }
             3 | 4 => {
                 let result = match function {
-                    3 => client.read_input_registers(address, 1),
-                    4 => client.read_holding_registers(address, 1),
+                    3 => client.read_holding_registers(address, 1),
+                    4 => client.read_input_registers(address, 1),
                     _ => unreachable!(),
                 };
 

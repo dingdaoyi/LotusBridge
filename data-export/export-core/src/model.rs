@@ -14,7 +14,7 @@ pub struct DeviceGroupValue {
     pub export_name: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,Serialize)]
 pub struct PointValue {
     pub id: i32,
     pub point: Point,

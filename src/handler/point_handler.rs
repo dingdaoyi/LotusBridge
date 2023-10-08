@@ -15,6 +15,7 @@ use protocol_core::{Point, PointWithProtocolId, Value, WriterPointRequest};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use tokio::runtime::Runtime;
+use crate::handler::device_handler::list_all_device_group;
 
 pub async fn get_point(State(pool): State<SqlitePool>, Path(id): Path<i32>) -> Result<Json<Point>> {
     let point = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE id = ?")
@@ -178,14 +179,25 @@ pub async fn read_point_value(
     State(pool): State<SqlitePool>,
     Path(id): Path<i32>,
 ) -> Result<Json<R<Value>>> {
-    Runtime::new().unwrap().block_on(async {
-        let point = get_point_with_protocol_id(pool, id).await?;
-        let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
-            .await
-            .map(|e| e.value)?;
-        Ok(Json(R::success_with_data(res)))
-    })
+    let point = get_point_with_protocol_id(pool, id).await?;
+    let res = device_shadow::read_point(point.protocol_name.clone(), point.into())
+        .await
+        .map(|e| e.value)?;
+    Ok(Json(R::success_with_data(res)))
 }
+
+
+///此处需要优化,目前是获取所有group_id,后续需要优化为根据group_id查询
+pub async fn read_group_point_values(
+    State(pool): State<SqlitePool>,
+    Path(group_id): Path<i32>,
+) -> Result<Json<R<Vec<PointValue>>>> {
+    let device_group_list=list_all_device_group(pool.clone()).await?;
+   let device_group= device_group_list.into_iter().find(|device_group|device_group.id==group_id).ok_or(EdgeError::Message("设备组不存在,请检查参数!".into()))?;
+   let device_group_value= read_point_group_value(device_group).await?;
+    Ok(Json(R::success_with_data(device_group_value.point_values)))
+}
+
 
 pub async fn read_point_group_value(
     device_group: DeviceGroupWithExportName,
@@ -226,18 +238,16 @@ pub async fn writer_point_value(
     Path(id): Path<i32>,
     Json(WriterValue { value, .. }): Json<WriterValue>,
 ) -> Result<Json<R<Value>>> {
-    Runtime::new().unwrap().block_on(async {
-        let point = get_point_with_protocol_id(pool, id).await?;
-        let store = get_protocol_store().unwrap();
-        let protocol_map = store.inner.lock().await;
-        let protocol = protocol_map
-            .get(&point.protocol_name)
-            .ok_or(EdgeError::Message("协议不存在,检查服务配置".into()))?;
-        let mut request: WriterPointRequest = point.into();
-        request.value = value;
-        let res = protocol.lock().await.write_point(request).await?;
-        Ok(Json(R::success_with_data(res)))
-    })
+    let point = get_point_with_protocol_id(pool, id).await?;
+    let store = get_protocol_store().unwrap();
+    let protocol_map = store.inner.lock().await;
+    let protocol = protocol_map
+        .get(&point.protocol_name)
+        .ok_or(EdgeError::Message("协议不存在,检查服务配置".into()))?;
+    let mut request: WriterPointRequest = point.into();
+    request.value = value;
+    let res = protocol.lock().await.write_point(request).await?;
+    Ok(Json(R::success_with_data(res)))
 }
 
 async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWithProtocolId> {
