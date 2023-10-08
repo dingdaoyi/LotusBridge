@@ -116,7 +116,7 @@ pub async fn create_point(
     }
 
     let created_point = sqlx::query_as::<_, Point>(
-        "INSERT INTO tb_point (device_id,group_id, address, data_type, access_mode, multiplier, precision, description, part_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?) RETURNING *",
+        "INSERT INTO tb_point (device_id,group_id, address, data_type, access_mode, multiplier, precision, description, part_number,identifier) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?) RETURNING *",
     )
         .bind(device_id)
         .bind(point.group_id)
@@ -127,6 +127,7 @@ pub async fn create_point(
         .bind(point.precision)
         .bind(&point.description)
         .bind(&point.part_number)
+        .bind(&point.identifier)
         .fetch_one(&pool)
         .await?;
 
@@ -139,7 +140,7 @@ pub async fn update_point(
     Json(point): Json<Point>,
 ) -> Result<Json<R<String>>> {
     let updated_point = sqlx::query(
-        "UPDATE tb_point SET address = $1, data_type = $2, access_mode = $3, multiplier = $4, precision = $5, description = $6, part_number = $7, device_id = $8  WHERE id = $9",
+        "UPDATE tb_point SET address = $1, data_type = $2, access_mode = $3, multiplier = $4, precision = $5, description = $6, part_number = $7, device_id = $8 , identifier=$9 WHERE id = $10",
     )
         .bind(&point.address)
         .bind(&point.data_type)
@@ -149,6 +150,7 @@ pub async fn update_point(
         .bind(&point.description)
         .bind(&point.part_number)
         .bind(point.device_id)
+        .bind(point.identifier)
         .bind(id)
         .execute(&pool)
         .await?;
@@ -253,7 +255,7 @@ pub async fn writer_point_value(
 async fn get_point_with_protocol_id(pool: SqlitePool, id: i32) -> Result<PointWithProtocolId> {
     let point = sqlx::query_as::<_, PointWithProtocolId>(r#"
     SELECT tb_point.id AS point_id, tb_point.device_id, tb_point.group_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
-       tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
+       tb_point.multiplier, tb_point.precision,tb_point.identifier, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
         FROM tb_point
         JOIN tb_device ON tb_point.device_id = tb_device.id
         WHERE tb_point.id = ?;
@@ -277,7 +279,7 @@ async fn get_points_with_group_id(
 ) -> Result<Vec<PointWithProtocolId>> {
     let point_list = sqlx::query_as::<_, PointWithProtocolId>(r#"
         SELECT tb_point.id AS point_id, tb_point.device_id,tb_point.group_id, tb_point.address, tb_point.data_type, tb_point.access_mode,
-               tb_point.multiplier, tb_point.precision, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
+               tb_point.multiplier, tb_point.precision,tb_point.identifier, tb_point.description, tb_point.part_number, tb_device.protocol_name AS protocol_name
         FROM tb_point
         JOIN tb_device ON tb_point.device_id = tb_device.id
         WHERE tb_point.group_id = ?;

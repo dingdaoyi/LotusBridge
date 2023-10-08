@@ -44,6 +44,7 @@ impl From<PointWithProtocolId> for PointValue {
                 access_mode: point.access_mode,
                 multiplier: point.multiplier,
                 precision: point.precision,
+                identifier: point.identifier,
                 description: point.description,
                 part_number: point.part_number,
             },

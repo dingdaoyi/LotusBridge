@@ -40,20 +40,28 @@ CREATE TABLE tb_device_group
     UNIQUE (device_id, name)
 );
 
-CREATE TABLE tb_point
+-- auto-generated definition
+create table tb_point
 (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    address     TEXT    NOT NULL,
-    data_type   TEXT    NOT NULL,
-    access_mode TEXT    NOT NULL,
-    multiplier  REAL    NOT NULL,
-    precision   INTEGER NOT NULL,
-    description TEXT    NOT NULL,
+    id          INTEGER
+        primary key autoincrement,
+    device_id   INTEGER
+        constraint tb_point_tb_device_id_fk
+            references tb_device
+            on delete cascade,
+    address     TEXT    not null,
+    data_type   TEXT    not null,
+    access_mode TEXT    not null,
+    multiplier  REAL    not null,
+    precision   INTEGER not null,
+    description TEXT    not null,
     part_number TEXT,
-    device_id   INTEGER REFERENCES tb_device (id) ON DELETE CASCADE,
-    group_id    INTEGER REFERENCES tb_device_group (id) ON DELETE CASCADE,
-    UNIQUE (device_id, address)
+    group_id    integer,
+    identifier  text,
+    unique (device_id, address)
 );
+
+
 
 CREATE TABLE tb_export_group
 (

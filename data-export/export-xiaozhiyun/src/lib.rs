@@ -106,7 +106,7 @@ impl Message {
         let point = point_value.point;
         Self {
             id: Some(1),
-            identifier: "pressure".to_string(),
+            identifier: point.identifier.unwrap_or("pressure".into()),
             value: point_value.value,
             base_message: BaseMessage {
                 unit_address: point.part_number,

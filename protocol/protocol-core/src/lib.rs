@@ -90,6 +90,9 @@ pub struct Point {
     pub access_mode: AccessMode,
     pub multiplier: f64,
     pub precision: u32,
+    //标识符
+    pub identifier: Option<String>,
+
     pub description: String,
     #[serde(rename = "partNumber")]
     pub part_number: Option<String>,
@@ -103,6 +106,8 @@ pub struct PointWithProtocolId {
     pub address: String,
     pub data_type: DataType,
     pub access_mode: AccessMode,
+    //标识符
+    pub identifier: Option<String>,
     pub multiplier: f64,
     pub precision: u32,
     pub description: String,

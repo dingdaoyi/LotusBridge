@@ -19,6 +19,8 @@ pub struct CreatePoint {
     pub description: String,
     #[serde(rename = "partNumber")]
     pub part_number: Option<String>,
+    //标识符
+    pub identifier: String,
 }
 
 #[derive(Debug, Deserialize)]
