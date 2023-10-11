@@ -2,7 +2,7 @@ use crate::ModbusType::{RTU, TCP};
 use async_trait::async_trait;
 use protocol_core::event_bus::PointEvent;
 use protocol_core::protocol_store::ProtocolStore;
-use protocol_core::{Device, Protocol, ProtocolError, ReadPointRequest, Value, WriterPointRequest};
+use protocol_core::{combine_u16_to_u32, DataType, Device, Protocol, ProtocolError, ReadPointRequest, split_u32_to_u16s, Value, WriterPointRequest};
 use std::collections::HashMap;
 use std::string::ToString;
 use std::sync::Arc;
@@ -126,6 +126,7 @@ pub enum ReadPointError {
     UnknownFunction,
     NoDataReceived,
 }
+
 impl std::fmt::Display for ReadPointError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let message = match self {
@@ -159,11 +160,16 @@ impl Protocol for ModbusTcpProtocol {
             function: 3,
             address: 0,
         });
+        let cnt = match &request.data_type {
+            DataType::Long => 2,
+            _ => 1
+        };
+
         match function {
             0 | 1 => {
                 let result = match function {
-                    0 => client.read_coils(address, 1),
-                    1 => client.read_discrete_inputs(address, 1),
+                    0 => client.read_coils(address, cnt),
+                    1 => client.read_discrete_inputs(address, cnt),
                     _ => unreachable!(),
                 };
 
@@ -174,15 +180,18 @@ impl Protocol for ModbusTcpProtocol {
             }
             3 | 4 => {
                 let result = match function {
-                    3 => client.read_holding_registers(address, 1),
-                    4 => client.read_input_registers(address, 1),
+                    3 => client.read_holding_registers(address, cnt),
+                    4 => client.read_input_registers(address, cnt),
                     _ => unreachable!(),
                 };
 
                 result
                     .await
                     .map(|words| {
-                        Value::Integer(words.first().map(|value| *value as i32).unwrap_or(0))
+                        match &request.data_type {
+                            DataType::Long => Value::Long(combine_u16_to_u32(words[0] , words[1]) as i64),
+                            _ => Value::Integer(words.first().map(|value| *value as i32).unwrap_or(0))
+                        }
                     })
                     .map_err(|e| ProtocolError::from(e))
             }
@@ -218,11 +227,21 @@ impl Protocol for ModbusTcpProtocol {
                 }
             }
             4 => {
-                if let Value::Integer(value) = request.value {
-                    client
-                        .write_single_register(address, value as u16)
-                        .await
-                        .map_err(|e| e.to_string())?;
+                match request.value {
+                    Value::Integer(value)=>{
+                        client
+                            .write_single_register(address, value as u16)
+                            .await
+                            .map_err(|e| e.to_string())?
+                    },
+                    Value::Long(value)=>{
+                     let  (high, low)=  split_u32_to_u16s(value as u32);
+                        client
+                            .write_multiple_registers(address, [high,low].as_ref())
+                            .await
+                            .map_err(|e| e.to_string())?;
+                    },
+                    _=>{}
                 }
             }
             _ => return Err(ReadPointError::UnknownFunction.into()),
@@ -295,6 +314,7 @@ fn parse_address(address: &str) -> Option<Address> {
     }
     None
 }
+
 #[cfg(feature = "modbus-tcp")]
 pub async fn register_modbus_tcp(store: &ProtocolStore) {
     let protocol = ModbusTcpProtocol::new(TCP_PROTOCOL_NAME.into());
@@ -325,6 +345,7 @@ impl ToString for ModbusType {
         }
     }
 }
+
 impl From<&str> for ModbusType {
     fn from(value: &str) -> Self {
         match value {

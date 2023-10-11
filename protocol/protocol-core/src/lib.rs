@@ -42,6 +42,8 @@ impl From<std::io::Error> for ProtocolError {
 pub enum Value {
     /// Integer value.
     Integer(i32),
+    /// Long value.
+    Long(i64),
     /// Float value.
     Float(f64),
     /// Boolean value.
@@ -120,6 +122,8 @@ pub struct PointWithProtocolId {
 pub enum DataType {
     #[serde(rename = "Integer")]
     Integer,
+    #[serde(rename = "Long")]
+    Long,
     #[serde(rename = "Float")]
     Float,
     #[serde(rename = "String")]
@@ -217,4 +221,19 @@ pub trait Protocol: Any + Send + Sync {
 
     /// 更新设备
     fn update_device(&self, device: Device) -> Result<(), ProtocolError>;
+}
+
+/// int  转换为  long
+pub fn combine_u16_to_u32(high: u16, low: u16) -> u32 {
+    let high_shifted = (high as u32) << 16;
+    let low = low as u32;
+    let combined = high_shifted | low;
+    combined
+}
+
+/// long 转int
+pub fn split_u32_to_u16s(data: u32) -> (u16, u16) {
+    let high = (data >> 16) as u16;
+    let low = data as u16;
+    (high, low)
 }
