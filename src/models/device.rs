@@ -28,6 +28,7 @@ pub struct DeviceDTO {
     pub protocol_name: String,
 }
 
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct DeviceDTOStatistics {
     pub id: i32,

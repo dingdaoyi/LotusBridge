@@ -1,5 +1,6 @@
 pub mod event_bus;
 pub mod protocol_store;
+
 use crate::event_bus::PointEvent;
 use async_trait::async_trait;
 use derive_getters::Getters;
@@ -26,16 +27,19 @@ impl From<&str> for ProtocolError {
         Self(value.to_string())
     }
 }
+
 impl From<String> for ProtocolError {
     fn from(value: String) -> Self {
         Self(value)
     }
 }
+
 impl From<std::io::Error> for ProtocolError {
     fn from(value: std::io::Error) -> Self {
         Self(value.to_string())
     }
 }
+
 /// 解析值
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
@@ -167,6 +171,7 @@ impl From<PointWithProtocolId> for ReadPointRequest {
         }
     }
 }
+
 #[derive(Getters)]
 pub struct WriterPointRequest {
     pub device_id: i32,
@@ -193,6 +198,18 @@ impl From<PointWithProtocolId> for WriterPointRequest {
         }
     }
 }
+
+/// 协议状态
+#[derive(Debug, Type, Clone,Copy)]
+pub enum ProtocolState {
+    /// 未初始化
+    NoInitialized,
+    /// 运行中
+    Running,
+    /// 停止
+    Closed,
+}
+
 /// Protocol trait for data processing.
 #[async_trait]
 pub trait Protocol: Any + Send + Sync {
@@ -201,6 +218,8 @@ pub trait Protocol: Any + Send + Sync {
 
     ///写点位,返回老点的值
     async fn write_point(&self, request: WriterPointRequest) -> Result<Value, ProtocolError>;
+
+    fn get_state(&self) -> ProtocolState;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
@@ -211,10 +230,10 @@ pub trait Protocol: Any + Send + Sync {
     ) -> Result<(), ProtocolError>;
 
     /// 停止
-    fn stop(&self, force: bool) -> Result<(), ProtocolError>;
+    fn stop(&mut self, force: bool) -> Result<(), ProtocolError>;
 
     /// 添加设备
-    fn add_device(&self, device: Device) -> Result<(), ProtocolError>;
+    fn add_device(& mut self, device: Device) -> Result<(), ProtocolError>;
 
     /// 删除设备
     fn remove_device(&self, device_id: i64) -> Result<(), ProtocolError>;

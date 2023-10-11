@@ -6,6 +6,8 @@ use protocol_core::{Device, Point};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use std::collections::HashMap;
+use crate::config::db::get_conn;
+use crate::initialize::protocol::add_device_to_protocol;
 
 use crate::models::device::{
     CreatDevice, CreateDeviceGroup, DeviceDTO, DeviceDTOStatistics, DeviceGroup,
@@ -18,26 +20,39 @@ pub async fn load_all_device_details(pool: SqlitePool) -> Result<HashMap<String,
         .fetch_all(&pool)
         .await?;
     let mut res: HashMap<String, Vec<Device>> = HashMap::new();
-    for device in device_list.iter() {
+    for device in device_list.into_iter() {
         let points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE device_id = ?")
             .bind(device.id)
             .fetch_all(&pool)
             .await?;
-        let device_with_points = Device {
-            id: device.id,
-            name: device.name.clone(),
-            device_type: device.device_type.clone(),
-            points,
-            custom_data: device.custom_data.0.clone(),
-            protocol_name: device.protocol_name.clone(),
-        };
+        let mut device_with_points: Device = device.into();
+        device_with_points.points = points;
         // 插入方式简洁处理
-        res.entry(device.protocol_name.clone())
+        res.entry(device_with_points.protocol_name.clone())
             .or_insert_with(Vec::new)
             .push(device_with_points);
     }
     tracing::info!("加载协议总数:{}", res.len());
     Ok(res)
+}
+
+pub async fn device_details(id: i32) -> Result<Device> {
+    let pool = get_conn();
+    let device = sqlx::query_as::<_, DeviceDTO>("SELECT * FROM tb_device where id=?")
+        .bind(id)
+        .fetch_optional(&pool)
+        .await?;
+    if let Some(device) = device {
+        let points = sqlx::query_as::<_, Point>("SELECT * FROM tb_point WHERE device_id = ?")
+            .bind(device.id)
+            .fetch_all(&pool)
+            .await?;
+        let mut device_with_points: Device = device.into();
+        device_with_points.points = points;
+        return Ok(device_with_points);
+    }
+    tracing::error!("设备不存在:{}", id);
+    Err(EdgeError::Message("设备不存在".into()))
 }
 
 pub async fn create_device(
@@ -53,7 +68,15 @@ pub async fn create_device(
         .bind(device.protocol_name.clone())
         .fetch_one(&pool)
         .await?;
-
+    //添加设备到协议中
+    let protocol_name = created_device.protocol_name.clone();
+    let device_id = created_device.id;
+    tokio::spawn(async move {
+        let res = add_device_to_protocol(protocol_name, device_id).await;
+        if let Err(msg) = res {
+            tracing::error!("添加设备到协议失败:{:?}",msg);
+        }
+    });
     Ok(Json(R::success_with_data(created_device)))
 }
 
@@ -142,12 +165,12 @@ pub async fn create_device_group(
     let created_device_group = sqlx::query_as::<_, DeviceGroup>(
         "INSERT INTO tb_device_group (name, interval, device_id) VALUES (?, ?, ?) RETURNING *",
     )
-    .bind(&device_group.name)
-    .bind(device_group.interval)
-    .bind(device_group.device_id)
-    .fetch_one(&pool)
-    .await
-    .map_err(|_| EdgeError::Message("设备id不存在".into()))?;
+        .bind(&device_group.name)
+        .bind(device_group.interval)
+        .bind(device_group.device_id)
+        .fetch_one(&pool)
+        .await
+        .map_err(|_| EdgeError::Message("设备id不存在".into()))?;
 
     Ok(Json(R::success_with_data(created_device_group)))
 }
@@ -207,9 +230,9 @@ pub async fn list_all_device_group(pool: SqlitePool) -> Result<Vec<DeviceGroupWi
             WHERE dg.id = ?
             "#,
         )
-        .bind(&device_group.id)
-        .fetch_all(&pool)
-        .await?;
+            .bind(&device_group.id)
+            .fetch_all(&pool)
+            .await?;
         let mut device_group_with_export_name: DeviceGroupWithExportName = device_group.into();
         device_group_with_export_name.export_name = export_name;
         result.push(device_group_with_export_name);
@@ -225,12 +248,12 @@ pub async fn update_device_group(
     let updated_device_group = sqlx::query(
         "UPDATE tb_device_group SET name = $1, interval = $2, device_id = $3 WHERE id = $4",
     )
-    .bind(&device_group.name)
-    .bind(device_group.interval)
-    .bind(device_group.device_id)
-    .bind(id)
-    .execute(&pool)
-    .await?;
+        .bind(&device_group.name)
+        .bind(device_group.interval)
+        .bind(device_group.device_id)
+        .bind(id)
+        .execute(&pool)
+        .await?;
 
     if updated_device_group.rows_affected() > 0 {
         Ok(Json(R::success()))

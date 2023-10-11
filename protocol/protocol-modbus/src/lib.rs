@@ -2,7 +2,7 @@ use crate::ModbusType::{RTU, TCP};
 use async_trait::async_trait;
 use protocol_core::event_bus::PointEvent;
 use protocol_core::protocol_store::ProtocolStore;
-use protocol_core::{combine_u16_to_u32, DataType, Device, Protocol, ProtocolError, ReadPointRequest, split_u32_to_u16s, Value, WriterPointRequest};
+use protocol_core::{combine_u16_to_u32, DataType, Device, Protocol, ProtocolError, ProtocolState, ReadPointRequest, split_u32_to_u16s, Value, WriterPointRequest};
 use std::collections::HashMap;
 use std::string::ToString;
 use std::sync::Arc;
@@ -31,6 +31,7 @@ pub struct ModbusTcpProtocol {
     device_list: Arc<Vec<Device>>,
     sender: Option<tokio::sync::mpsc::Sender<PointEvent>>,
     modbus_client: Arc<RwLock<HashMap<i32, Arc<Mutex<ModbusClient>>>>>,
+    status: ProtocolState,
 }
 
 impl ModbusTcpProtocol {
@@ -40,6 +41,7 @@ impl ModbusTcpProtocol {
             device_list: Arc::new(vec![]),
             sender: None,
             modbus_client: Arc::new(RwLock::new(HashMap::new())),
+            status: ProtocolState::NoInitialized,
         }
     }
 
@@ -189,7 +191,7 @@ impl Protocol for ModbusTcpProtocol {
                     .await
                     .map(|words| {
                         match &request.data_type {
-                            DataType::Long => Value::Long(combine_u16_to_u32(words[0] , words[1]) as i64),
+                            DataType::Long => Value::Long(combine_u16_to_u32(words[0], words[1]) as i64),
                             _ => Value::Integer(words.first().map(|value| *value as i32).unwrap_or(0))
                         }
                     })
@@ -228,26 +230,31 @@ impl Protocol for ModbusTcpProtocol {
             }
             4 => {
                 match request.value {
-                    Value::Integer(value)=>{
+                    Value::Integer(value) => {
                         client
                             .write_single_register(address, value as u16)
                             .await
                             .map_err(|e| e.to_string())?
-                    },
-                    Value::Long(value)=>{
-                     let  (high, low)=  split_u32_to_u16s(value as u32);
+                    }
+                    Value::Long(value) => {
+                        let (high, low) = split_u32_to_u16s(value as u32);
                         client
-                            .write_multiple_registers(address, [high,low].as_ref())
+                            .write_multiple_registers(address, [high, low].as_ref())
                             .await
                             .map_err(|e| e.to_string())?;
-                    },
-                    _=>{}
+                    }
+                    _ => {}
                 }
             }
             _ => return Err(ReadPointError::UnknownFunction.into()),
         };
         Ok(request.value)
     }
+
+    fn get_state(&self) -> ProtocolState {
+        self.status
+    }
+
     async fn initialize(
         &mut self,
         device_list: Vec<Device>,
@@ -267,15 +274,20 @@ impl Protocol for ModbusTcpProtocol {
                 self.init_tcp_modbus().await;
             }
         }
+        self.status = ProtocolState::Running;
         Ok(())
     }
 
-    fn stop(&self, _force: bool) -> Result<(), ProtocolError> {
+    fn stop(&mut self, _force: bool) -> Result<(), ProtocolError> {
+        self.status = ProtocolState::Closed;
         todo!()
     }
 
-    fn add_device(&self, _device: protocol_core::Device) -> Result<(), ProtocolError> {
-        todo!()
+    fn add_device(&mut self, device: Device) -> Result<(), ProtocolError> {
+        let device_list = Arc::get_mut(&mut self.device_list)
+            .ok_or(ProtocolError::from("Cannot mutably borrow device_list"))?;
+        device_list.push(device);
+        Ok(())
     }
 
     fn remove_device(&self, _device_id: i64) -> Result<(), ProtocolError> {
