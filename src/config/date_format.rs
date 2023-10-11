@@ -23,8 +23,7 @@ where
     let value = Option::<String>::deserialize(deserializer)?;
 
     if let Some(value) = value {
-        let datetime = Utc
-            .datetime_from_str(&value, DATE_FORMAT)
+        let datetime = DateTime::parse_from_str(&value, DATE_FORMAT)
             .map_err(serde::de::Error::custom)?;
         Ok(Some(datetime.naive_utc()))
     } else {
