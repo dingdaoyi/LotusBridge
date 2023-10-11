@@ -84,12 +84,12 @@ https://github.com/dingdaoyi/lotus_bridge_window
 
 ## 原型设计
 
-原型设计由@zxc-411 提供
+原型设计由 [@zxc-411](https://github.com/zxc-411)提供
 http://axure.zd178.com/byjs/#id=gsrjql&p=%E5%90%91%E5%8D%97%E9%93%BE%E6%8E%A5&g=1
 
 ## UI设计
 
-UI设计由@annei 提供
+UI设计由 [@annei](https://github.com/annei)提供
 https://mastergo.com/goto/syA7JxUe?page_id=M&file=100489162530367
 
 ## 许可证
