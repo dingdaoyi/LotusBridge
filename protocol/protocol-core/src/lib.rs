@@ -14,6 +14,12 @@ use std::fmt;
 #[derive(Debug)]
 pub struct ProtocolError(String);
 
+impl ProtocolError {
+    pub fn new<T:Into<String>>(msg: T) -> Self {
+        Self(msg.into())
+    }
+}
+
 impl fmt::Display for ProtocolError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
@@ -136,7 +142,7 @@ pub enum DataType {
     Boolean,
 }
 
-#[derive(Debug, Serialize, Deserialize, Type, Clone)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone,Eq, PartialEq)]
 pub enum AccessMode {
     #[serde(rename = "ReadWrite")]
     ReadWrite,
@@ -213,13 +219,6 @@ pub enum ProtocolState {
 /// Protocol trait for data processing.
 #[async_trait]
 pub trait Protocol: Any + Send + Sync {
-    ///读取点位数据
-    async fn read_point(&self, request: ReadPointRequest) -> Result<Value, ProtocolError>;
-
-    ///写点位,返回老点的值
-    async fn write_point(&self, request: WriterPointRequest) -> Result<Value, ProtocolError>;
-
-    fn get_state(&self) -> ProtocolState;
 
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
@@ -229,6 +228,15 @@ pub trait Protocol: Any + Send + Sync {
         sender: tokio::sync::mpsc::Sender<PointEvent>,
     ) -> Result<(), ProtocolError>;
 
+    ///读取点位数据
+    async fn read_point(&self, request: ReadPointRequest) -> Result<Value, ProtocolError>;
+
+    ///写点位,返回老点的值
+    async fn write_point(&self, request: WriterPointRequest) -> Result<Value, ProtocolError>;
+
+    fn get_state(&self) -> ProtocolState;
+
+
     /// 停止
     fn stop(&mut self, force: bool) -> Result<(), ProtocolError>;
 
@@ -236,10 +244,10 @@ pub trait Protocol: Any + Send + Sync {
     fn add_device(& mut self, device: Device) -> Result<(), ProtocolError>;
 
     /// 删除设备
-    fn remove_device(&self, device_id: i64) -> Result<(), ProtocolError>;
+    fn remove_device(&mut self, device_id: i32) -> Result<(), ProtocolError>;
 
     /// 更新设备
-    fn update_device(&self, device: Device) -> Result<(), ProtocolError>;
+    fn update_device(&mut self, device: Device) -> Result<(), ProtocolError>;
 }
 
 /// int  转换为  long

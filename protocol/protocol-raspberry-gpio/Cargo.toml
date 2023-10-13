@@ -1,0 +1,15 @@
+[package]
+name = "protocol-raspberry-gpio"
+version = "0.1.0"
+edition = "2021"
+
+# Raspberry Pi Peripheral Access Library
+
+[dependencies]
+rppal = "0.14.1"
+protocol-core = { path = "../protocol-core"  }
+tokio = { version = "1.28", features = ["full"] }
+libc = "0.2"
+async-trait = "0.1"
+[dev-dependencies]
+libc = "0.2"

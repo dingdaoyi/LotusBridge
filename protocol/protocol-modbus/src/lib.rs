@@ -148,6 +148,29 @@ impl Into<ProtocolError> for ReadPointError {
 
 #[async_trait]
 impl Protocol for ModbusTcpProtocol {
+    async fn initialize(
+        &mut self,
+        device_list: Vec<Device>,
+        sender: tokio::sync::mpsc::Sender<PointEvent>,
+    ) -> Result<(), ProtocolError> {
+        println!("协议包含数据:{:?}", device_list);
+        self.sender = Some(sender);
+        self.device_list = Arc::new(device_list);
+        match &self.modbus_type {
+            RTU => {
+                #[cfg(feature = "modbus-rtu")]
+                self.init_rtu_modbus().await;
+            }
+
+            TCP => {
+                #[cfg(feature = "modbus-tcp")]
+                self.init_tcp_modbus().await;
+            }
+        }
+        self.status = ProtocolState::Running;
+        Ok(())
+    }
+
     async fn read_point(&self, request: ReadPointRequest) -> Result<Value, ProtocolError> {
         let binding = self.modbus_client.read().await;
         let res = binding
@@ -255,32 +278,9 @@ impl Protocol for ModbusTcpProtocol {
         self.status
     }
 
-    async fn initialize(
-        &mut self,
-        device_list: Vec<Device>,
-        sender: tokio::sync::mpsc::Sender<PointEvent>,
-    ) -> Result<(), ProtocolError> {
-        println!("协议包含数据:{:?}", device_list);
-        self.sender = Some(sender);
-        self.device_list = Arc::new(device_list);
-        match &self.modbus_type {
-            RTU => {
-                #[cfg(feature = "modbus-rtu")]
-                self.init_rtu_modbus().await;
-            }
-
-            TCP => {
-                #[cfg(feature = "modbus-tcp")]
-                self.init_tcp_modbus().await;
-            }
-        }
-        self.status = ProtocolState::Running;
-        Ok(())
-    }
-
     fn stop(&mut self, _force: bool) -> Result<(), ProtocolError> {
         self.status = ProtocolState::Closed;
-        todo!()
+        Ok(())
     }
 
     fn add_device(&mut self, device: Device) -> Result<(), ProtocolError> {
@@ -290,11 +290,14 @@ impl Protocol for ModbusTcpProtocol {
         Ok(())
     }
 
-    fn remove_device(&self, _device_id: i64) -> Result<(), ProtocolError> {
-        todo!()
+    fn remove_device(&mut self, device_id: i32) -> Result<(), ProtocolError> {
+        let device_list = Arc::get_mut(&mut self.device_list)
+            .ok_or(ProtocolError::from("Cannot mutably borrow device_list"))?;
+        device_list.retain(|device| device.id != device_id);
+        Ok(())
     }
 
-    fn update_device(&self, _device: protocol_core::Device) -> Result<(), ProtocolError> {
+    fn update_device(&mut self, _device: protocol_core::Device) -> Result<(), ProtocolError> {
         todo!()
     }
 }

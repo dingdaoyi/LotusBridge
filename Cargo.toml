@@ -8,6 +8,7 @@ edition = "2021"
 members = [
     "protocol/protocol-core",
     "protocol/protocol-modbus",
+    "protocol/protocol-raspberry-gpio",
     "data-export/export-core",
     "data-export/export-xiaozhiyun",
 ]
