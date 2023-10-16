@@ -8,3 +8,8 @@ pub struct PointEvent {
     pub point_id: i32,
     pub value: Value,
 }
+impl PointEvent {
+    pub fn new(point_id: i32, value: Value) -> Self {
+        Self { point_id, value }
+    }
+}

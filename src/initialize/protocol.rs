@@ -45,7 +45,7 @@ pub async fn add_device_to_protocol(
 
     let (sender, mut receiver) = tokio::sync::mpsc::channel(1);
     let protocol = get_protocol(&protocol_name).await;
-    let mut protocol = protocol.lock().await;
+    let protocol = protocol.lock().await;
     match protocol.get_state() {
         ProtocolState::NoInitialized => {
             match initialize_protocol(protocol_name.clone(), sender.clone(), vec![device]).await

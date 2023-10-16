@@ -1,7 +1,7 @@
 pub mod event_bus;
 pub mod protocol_store;
+pub mod protocol_context;
 
-use crate::event_bus::PointEvent;
 use async_trait::async_trait;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
@@ -10,12 +10,13 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
+use crate::protocol_context::ProtocolContext;
 
 #[derive(Debug)]
 pub struct ProtocolError(String);
 
 impl ProtocolError {
-    pub fn new<T:Into<String>>(msg: T) -> Self {
+    pub fn new<T: Into<String>>(msg: T) -> Self {
         Self(msg.into())
     }
 }
@@ -142,7 +143,7 @@ pub enum DataType {
     Boolean,
 }
 
-#[derive(Debug, Serialize, Deserialize, Type, Clone,Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone, Eq, PartialEq)]
 pub enum AccessMode {
     #[serde(rename = "ReadWrite")]
     ReadWrite,
@@ -206,7 +207,7 @@ impl From<PointWithProtocolId> for WriterPointRequest {
 }
 
 /// 协议状态
-#[derive(Debug, Type, Clone,Copy)]
+#[derive(Debug, Type, Clone, Copy)]
 pub enum ProtocolState {
     /// 未初始化
     NoInitialized,
@@ -220,12 +221,13 @@ pub enum ProtocolState {
 #[async_trait]
 pub trait Protocol: Any + Send + Sync {
 
+    fn context(&self) -> Option<ProtocolContext>;
+
     /// 初始化数据
     /// 后续添加参数 1, 点位,2 协议特有配置
     async fn initialize(
         &mut self,
-        device_list: Vec<Device>,
-        sender: tokio::sync::mpsc::Sender<PointEvent>,
+        context: ProtocolContext,
     ) -> Result<(), ProtocolError>;
 
     ///读取点位数据
@@ -234,20 +236,59 @@ pub trait Protocol: Any + Send + Sync {
     ///写点位,返回老点的值
     async fn write_point(&self, request: WriterPointRequest) -> Result<Value, ProtocolError>;
 
-    fn get_state(&self) -> ProtocolState;
+    fn get_state(&self) -> ProtocolState{
+        match self.context() {
+            None => {
+                ProtocolState::NoInitialized
+            }
+            Some(ctx) => {
+                ctx.status()
+            }
+        }
+    }
 
 
     /// 停止
     fn stop(&mut self, force: bool) -> Result<(), ProtocolError>;
 
     /// 添加设备
-    fn add_device(& mut self, device: Device) -> Result<(), ProtocolError>;
+    fn add_device(&self, device: Device) -> Result<(), ProtocolError> {
+        match self.context() {
+            None => {
+                return Err(ProtocolError::new("context 为空"));
+            }
+            Some(ctx) => {
+                ctx.add_device(device)?;
+            }
+        };
+        Ok(())
+    }
 
     /// 删除设备
-    fn remove_device(&mut self, device_id: i32) -> Result<(), ProtocolError>;
+    fn remove_device(&self, device_id: i32) -> Result<(), ProtocolError> {
+        match self.context() {
+            None => {
+                return Err(ProtocolError::new("context 为空"));
+            }
+            Some(ctx) => {
+                ctx.remove_device(device_id)?;
+            }
+        };
+        Ok(())
+    }
 
     /// 更新设备
-    fn update_device(&mut self, device: Device) -> Result<(), ProtocolError>;
+    fn update_device(&self, device: Device) -> Result<(), ProtocolError> {
+        match self.context() {
+            None => {
+                return Err(ProtocolError::new("context 为空"));
+            }
+            Some(ctx) => {
+                ctx.update_device(device)?;
+            }
+        };
+        Ok(())
+    }
 }
 
 /// int  转换为  long

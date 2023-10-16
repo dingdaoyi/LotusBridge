@@ -5,6 +5,7 @@ use protocol_core::protocol_store::ProtocolStore;
 use protocol_core::{Device, Protocol, ProtocolState};
 use std::sync::{Arc, OnceLock};
 use tokio::sync::Mutex;
+use protocol_core::protocol_context::ProtocolContext;
 
 static PROTOCOL_STORE: OnceLock<ProtocolStore> = OnceLock::new();
 static EXPORT_STORE: OnceLock<DataExportStore> = OnceLock::new();
@@ -54,10 +55,13 @@ pub async fn initialize_protocol(
     match protocol {
         None => Err(EdgeError::Message(format!("协议:{}不存在", &name))),
         Some(protocol) => {
+           let context= ProtocolContext::new(Arc::new(std::sync::RwLock::new(device_list)),
+                                             sender,
+                                             Arc::new(std::sync::RwLock::new(ProtocolState::NoInitialized)));
             protocol
                 .lock()
                 .await
-                .initialize(device_list, sender)
+                .initialize(context)
                 .await?;
             tracing::debug!("结束初始化协议:{:?}", name);
             Ok(())

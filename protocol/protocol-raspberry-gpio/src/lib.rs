@@ -6,12 +6,15 @@ use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use protocol_core::{Device, Point, Protocol, ProtocolError, ProtocolState, ReadPointRequest, Value, WriterPointRequest};
 use protocol_core::event_bus::PointEvent;
+use protocol_core::protocol_context::ProtocolContext;
 
 pub struct RaspberryGpioProtocol {
-    device_list: Arc<Vec<Device>>,
-    sender: Option<Arc<Mutex<Sender<PointEvent>>>>,
+    // device_list: Arc<Vec<Device>>,
+    // sender: Option<Arc<Mutex<Sender<PointEvent>>>>,
+    //
+    // status: ProtocolState,
+    context: Option<ProtocolContext>,
 
-    status: ProtocolState,
     task: Option<tokio::task::JoinHandle<()>>,
 
 }
@@ -19,13 +22,14 @@ pub struct RaspberryGpioProtocol {
 impl RaspberryGpioProtocol {
     pub fn new() -> Self {
         Self {
-            device_list: Arc::new(vec![]),
-            sender: None,
-            status: ProtocolState::NoInitialized,
+            context: None,
             task: None,
         }
     }
-    pub async fn innit_task(&mut self, device_list: Vec<Device>) -> Result<(), ProtocolError> {
+    pub async fn innit_task(& mut self) -> Result<(), ProtocolError> {
+        let context=self.context.clone().unwrap();
+        let device_list=context.device_list()?;
+
         if device_list.len() == 1 {
             let gpio = rppal::gpio::Gpio::new().map_err(|err|GpioError::from(err))?;
             let device = device_list.get(0).unwrap();
@@ -34,8 +38,7 @@ impl RaspberryGpioProtocol {
                 .filter(|point| point.access_mode == protocol_core::AccessMode::ReadWrite)
                 .cloned()
                 .collect();
-            let sender = self.sender.clone().unwrap(); // 克隆 sender 的 Arc<Mutex<Sender<PointEvent>>>
-            let sender=  sender.lock().await.clone();
+
             let task = tokio::spawn(async move {
                 loop {
                     for point in input_list.iter() {
@@ -59,7 +62,7 @@ impl RaspberryGpioProtocol {
                                         Value::Boolean(true)
                                     }
                                 };
-                                let _ = sender.send(PointEvent {
+                                let _ = context.sender.send(PointEvent {
                                     point_id: point.id,
                                     value,
                                 }).await;
@@ -82,11 +85,14 @@ impl RaspberryGpioProtocol {
 
 #[async_trait]
 impl Protocol for RaspberryGpioProtocol {
+    fn context(&self) -> Option<ProtocolContext> {
+        self.context.clone()
+    }
 
-    async fn initialize(&mut self, device_list: Vec<Device>, sender: Sender<PointEvent>) -> Result<(), ProtocolError> {
-        self.sender = Some(Arc::new(Mutex::new(sender)));
-        self.status = ProtocolState::Running;
-        self.innit_task(device_list).await?;
+    async fn initialize(&mut self,  context: ProtocolContext) -> Result<(), ProtocolError> {
+        self.context = Some(context.clone());
+        self.innit_task().await?;
+        self.context.clone().unwrap().set_status(ProtocolState::Running);
         Ok(())
     }
 
@@ -125,32 +131,9 @@ impl Protocol for RaspberryGpioProtocol {
         }
     }
 
-    fn get_state(&self) -> ProtocolState {
-        self.status
-    }
-
-
     fn stop(&mut self, _force: bool) -> Result<(), ProtocolError> {
-        self.status = ProtocolState::Closed;
+        self.context.clone().unwrap().set_status(ProtocolState::Closed);
         Ok(())
-    }
-
-    fn add_device(&mut self, device: Device) -> Result<(), ProtocolError> {
-        let device_list = Arc::get_mut(&mut self.device_list)
-            .ok_or(ProtocolError::from("Cannot mutably borrow device_list"))?;
-        device_list.push(device);
-        Ok(())
-    }
-
-    fn remove_device(&mut self, device_id: i32) -> Result<(), ProtocolError> {
-        let device_list = Arc::get_mut(&mut self.device_list)
-            .ok_or(ProtocolError::from("Cannot mutably borrow device_list"))?;
-        device_list.retain(|device| device.id != device_id);
-        Ok(())
-    }
-
-    fn update_device(&mut self, _device: Device) -> Result<(), ProtocolError> {
-        todo!()
     }
 }
 
